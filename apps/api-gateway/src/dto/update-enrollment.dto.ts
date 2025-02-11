@@ -1,25 +1,4 @@
-import { IsInt, IsOptional, IsString, IsBoolean, Min, Max } from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateEnrollmentDto } from './create-enrollment.dto';
 
-export class UpdateEnrollmentDto {
-  @IsOptional()
-  @IsInt()
-  studentId: number;
-
-  @IsOptional()
-  @IsInt()
-  courseId: number;
-
-  @IsOptional()
-  @IsString()
-  semester: string;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  @Max(5)
-  finalGrade?: number;
-
-  @IsOptional()
-  @IsBoolean()
-  isAssigned?: boolean;
-}
+export class UpdateEnrollmentDto extends PartialType(CreateEnrollmentDto) {}

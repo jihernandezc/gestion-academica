@@ -2,21 +2,21 @@ import { IsInt, IsOptional, IsString, IsBoolean, Min, Max } from 'class-validato
 
 export class CreateEnrollmentDto {
   @IsInt()
-  studentId: number;
+  readonly studentId: number;
 
   @IsInt()
-  courseId: number;
+  readonly courseId: number;
 
   @IsString()
-  semester: string;
+  readonly semester: string;
 
   @IsOptional()
   @IsInt()
   @Min(0)
   @Max(5)
-  finalGrade?: number;
+  readonly finalGrade?: number;
 
   @IsOptional()
   @IsBoolean()
-  isAssigned?: boolean;
+  readonly isAssigned?: boolean;
 }

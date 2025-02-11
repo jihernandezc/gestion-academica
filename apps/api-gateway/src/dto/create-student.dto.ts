@@ -2,18 +2,18 @@ import { IsString, IsOptional } from 'class-validator';
 
 export class CreateStudentDto {
   @IsString()
-  name: string;
+  readonly name: string;
 
   @IsString()
-  lastName: string;
+  readonly lastName: string;
 
   @IsString()
-  email: string;
+  readonly email: string;
 
   @IsOptional()
   @IsString()
-  phone?: string;
+  readonly phone?: string;
 
   @IsString()
-  career: string;
+  readonly career: string;
 }

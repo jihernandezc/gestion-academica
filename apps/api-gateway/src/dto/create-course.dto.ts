@@ -2,16 +2,16 @@ import { IsInt, IsString, IsOptional, Min } from 'class-validator';
 
 export class CreateCourseDto {
   @IsString()
-  name: string;
+  readonly name: string;
 
   @IsInt()
   @Min(1)
-  maxStudents: number;
+  readonly maxStudents: number;
 
   @IsOptional()
   @IsString()
-  description?: string;
+  readonly description?: string;
 
   @IsString()
-  category: string;
+  readonly category: string;
 }
