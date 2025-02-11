@@ -1,22 +1,21 @@
-import { IsInt, IsOptional, IsString, IsBoolean, Min, Max } from 'class-validator';
+import { IsInt, IsString, IsBoolean, IsOptional, Min, Max } from 'class-validator';
 
-export class CreateEnrollmentDto {
+export class CreateMatriculaDto {
   @IsInt()
-  studentId: number;
+  id_estudiante: number;
 
   @IsInt()
-  courseId: number;
+  id_materia: number;
 
   @IsString()
-  semester: string;
+  semestre: string;
 
   @IsOptional()
   @IsInt()
   @Min(0)
-  @Max(5)
-  finalGrade?: number;
+  @Max(10)
+  nota_final?: number; // Opcional porque al inscribirse puede no tener nota aún
 
-  @IsOptional()
   @IsBoolean()
-  isAssigned?: boolean;
+  cupo_asignado: boolean;
 }

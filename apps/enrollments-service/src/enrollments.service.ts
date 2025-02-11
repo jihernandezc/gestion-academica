@@ -1,30 +1,42 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
-import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
-import { UpdateEnrollmentDto } from './dto/update-enrollment.dto';
-import { Enrollment } from '@prisma/client';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { MatriculaRepository } from './enrollments.repository';
+import { Matricula } from './entities/matricula.entity';
+import { CreateMatriculaDto } from './dto/create-enrollment.dto';
+import { UpdateMatriculaDto } from './dto/update-enrollment.dto';
+import { FilterMatriculaCupoDto, FilterMatriculaEstudianteDto, FilterMatriculaMateriaDto } from 'dist/dto/filter-enrollment.dto';
 
 @Injectable()
-export class EnrollmentsService {
-  constructor(private prisma: PrismaService) {}
+export class MatriculaService {
+  constructor(private readonly matriculaRepository: MatriculaRepository) {}
 
-  async getAllEnrollments(): Promise<Enrollment[]> {
-    return this.prisma.enrollment.findMany();
+  async create(createMatriculaDto: CreateMatriculaDto): Promise<Matricula> {
+    return this.matriculaRepository.create(createMatriculaDto);
   }
 
-  async getEnrollmentById(id: number): Promise<Enrollment> {
-    return this.prisma.enrollment.findUnique({ where: { id } });
+  async findById(id: number): Promise<Matricula> {
+    const matricula = await this.matriculaRepository.findById(id);
+    if (!matricula) {
+      throw new NotFoundException(`Matrícula con id ${id} no encontrada`);
+    }
+    return matricula;
   }
 
-  async createEnrollment(data: CreateEnrollmentDto): Promise<Enrollment> {
-    return this.prisma.enrollment.create({ data });
+  async findAll(): Promise<Matricula[]> {
+    return this.matriculaRepository.findAll();
   }
 
-  async updateEnrollment(id: number, data: UpdateEnrollmentDto): Promise<Enrollment> {
-    return this.prisma.enrollment.update({ where: { id }, data });
+  async update(id: number, updateMatriculaDto: UpdateMatriculaDto): Promise<Matricula> {
+    await this.findById(id); // Verifica si existe antes de actualizar
+    return this.matriculaRepository.update(id, updateMatriculaDto);
   }
 
-  async deleteEnrollment(id: number): Promise<Enrollment> {
-    return this.prisma.enrollment.delete({ where: { id } });
+  async delete(id: number): Promise<void> {
+    await this.findById(id); // Verifica si existe antes de eliminar
+    return this.matriculaRepository.delete(id);
   }
+
+  async findByFilter(filters:FilterMatriculaEstudianteDto | FilterMatriculaMateriaDto | FilterMatriculaCupoDto): Promise<Matricula[]> {
+    return this.matriculaRepository.findByFilters(filters);
+  }
+
 }

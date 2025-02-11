@@ -1,25 +1,14 @@
-import { IsInt, IsOptional, IsString, IsBoolean, Min, Max } from 'class-validator';
+import { IsBoolean, IsInt, Max, Min, IsOptional} from 'class-validator';
 
-export class UpdateEnrollmentDto {
-  @IsOptional()
-  @IsInt()
-  studentId?: number;
-
-  @IsOptional()
-  @IsInt()
-  courseId?: number;
-
-  @IsOptional()
-  @IsString()
-  semester?: string;
+export class UpdateMatriculaDto {
 
   @IsOptional()
   @IsInt()
   @Min(0)
   @Max(5)
-  finalGrade?: number;
+  readonly nota_final?: number;
 
   @IsOptional()
   @IsBoolean()
-  isAssigned?: boolean;
+  readonly cupo_asignado?: boolean;
 }
