@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ApiModule } from './api.module';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(ApiModule);
@@ -10,6 +11,15 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
+
+  // Configura el ValidationPipe global
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Elimina propiedades no definidas en el DTO
+      forbidNonWhitelisted: true, // Lanza un error si se envían propiedades no definidas en el DTO
+      transform: true, // Transforma los datos a los tipos especificados en el DTO
+    }),
+  );
 
   // Comunicación con microservicios a través de Redis
   app.connectMicroservice<MicroserviceOptions>({

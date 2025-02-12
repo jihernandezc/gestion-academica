@@ -114,14 +114,14 @@ export class ApiController {
 
   //Recibe por ruta un id y por body un json con los atributos a modificar del estudiante y esto cambiara el recurso en BD
   @Put('students/:id')
-  async updateStudent(@Param('id') id: number, @Body() updateStudentDto: UpdateStudentDto) {
-    return this.studentsClient.send('update_student', { id, data: updateStudentDto });
+  async updateStudent(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
+    return this.studentsClient.send('update_student', { id: +id, data: updateStudentDto });
   }
 
   //Recibe por la ruta el id del estudiante que se desea elimnar de la BD
   @Delete('students/:id')
-  async deleteStudent(@Param('id') id: number) {
-    return this.studentsClient.send('delete_student', id);
+  async deleteStudent(@Param('id') id: string) {
+    return this.studentsClient.send('delete_student', +id);
   }
 
   @Get('courses/:id/available')
@@ -129,7 +129,7 @@ export class ApiController {
     return this.apiClient.send('get_available_count_by_course', courseId);
   }
 
-  @Get('name/students/:name')
+  @Get('students/name/:name')
   async findStudentsByName(@Param('name') name: string) {
     return this.studentsClient.send('find_students_by_name', name);
   }

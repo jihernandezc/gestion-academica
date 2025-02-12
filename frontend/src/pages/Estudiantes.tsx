@@ -35,7 +35,7 @@ const Estudiantes: React.FC = () => {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [open, setOpen] = useState(false);
   const [currentEstudiante, setCurrentEstudiante] = useState<Estudiante | null>(null);
-  const [searchId, setSearchId] = useState("");
+  const [searchName, setSearchName] = useState("");
 
   // Cargar estudiantes desde la API
   useEffect(() => {
@@ -63,14 +63,17 @@ const Estudiantes: React.FC = () => {
   const handleSave = async () => {
     if (currentEstudiante) {
       try {
-        const estudianteData = {
+        let estudianteData = {
           ...currentEstudiante,
-          id: Number(currentEstudiante.id), 
+          id: Number(currentEstudiante.id), // Ensure id is a number
         };
+  
+        console.log("Datos que se envían al backend:", estudianteData); // Agrega este console.log
   
         if (estudianteData.id === 0) {
           // Crear nuevo estudiante
-          const response = await axios.post(API_URL, estudianteData);
+          const { id, ...dataWithoutId } = estudianteData; // Eliminar el id del objeto
+          const response = await axios.post(API_URL, dataWithoutId);
           setEstudiantes([...estudiantes, response.data]);
         } else {
           // Editar estudiante existente
@@ -97,32 +100,22 @@ const Estudiantes: React.FC = () => {
   };
 
   const handleSearch = async () => {
-    if (!searchId.trim()) {
-      alert("Por favor, ingresa un ID válido");
+    if (!searchName.trim()) {
+      alert("Por favor, ingresa un nombre válido");
       return;
     }
-
-    const idNumber = Number(searchId);
-    if (isNaN(idNumber) || idNumber <= 0) {
-      alert("El ID debe ser un número válido");
-      return;
-    }
-
+  
     try {
-      const response = await axios.get<Estudiante>(`${API_URL}/find/${idNumber}`);
-
-      if (response.data) {
-        handleOpen(response.data);
+      const response = await axios.get<Estudiante[]>(`${API_URL}/name/${searchName}`);
+  
+      if (response.data.length > 0) {
+        setEstudiantes(response.data);
       } else {
         alert("Estudiante no encontrado");
       }
     } catch (error: any) {
-      if (error.response?.status === 404) {
-        alert("Estudiante no encontrado");
-      } else {
-        alert("Ocurrió un error al buscar el estudiante");
-        console.error("Error al buscar estudiante:", error);
-      }
+      alert("Ocurrió un error al buscar el estudiante");
+      console.error("Error al buscar estudiante:", error);
     }
   };
 
@@ -135,10 +128,10 @@ const Estudiantes: React.FC = () => {
         Agregar Estudiante
       </Button>
       <TextField
-        label="Buscar por ID"
+        label="Buscar por Nombre"
         variant="outlined"
-        value={searchId}
-        onChange={(e) => setSearchId(e.target.value)}
+        value={searchName}
+        onChange={(e) => setSearchName(e.target.value)}
         style={{ marginLeft: "20px", marginBottom: "20px" }}
       />
       <Button
