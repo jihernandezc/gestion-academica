@@ -282,25 +282,29 @@ const Enrollments: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {enrollments.map((enrollment) => (
-                <StyledTableRow key={enrollment.id}>
-                  <TableCell>{enrollment.id}</TableCell>
-                  <TableCell>{students.find((s) => s.id === enrollment.studentId)?.name}</TableCell>
-                  <TableCell>{courses.find((c) => c.id === enrollment.courseId)?.name}</TableCell>
-                  <TableCell>{enrollment.finalGrade ?? "N/A"}</TableCell>
-                  <TableCell>
-                    <StyledChip label={enrollment.isAssigned ? "Sí" : "No"} />
-                  </TableCell>
-                  <TableCell align="center">
-                    <StyledIconButton onClick={() => handleOpen(enrollment)} color="primary">
-                      <EditIcon />
-                    </StyledIconButton>
-                    <StyledIconButton onClick={() => handleDelete(enrollment.id)} color="error">
-                      <DeleteIcon />
-                    </StyledIconButton>
-                  </TableCell>
-                </StyledTableRow>
-              ))}
+              {enrollments.map((enrollment) => {
+                const student = students.find((s) => s.id === enrollment.studentId);
+                const course = courses.find((c) => c.id === enrollment.courseId);
+                return (
+                  <StyledTableRow key={enrollment.id}>
+                    <TableCell>{enrollment.id}</TableCell>
+                    <TableCell>{student ? `${student.name} ${student.lastName}` : "N/A"}</TableCell>
+                    <TableCell>{course ? course.name : "N/A"}</TableCell>
+                    <TableCell>{enrollment.finalGrade ?? "N/A"}</TableCell>
+                    <TableCell>
+                      <StyledChip label={enrollment.isAssigned ? "Sí" : "No"} />
+                    </TableCell>
+                    <TableCell align="center">
+                      <StyledIconButton onClick={() => handleOpen(enrollment)} color="primary">
+                        <EditIcon />
+                      </StyledIconButton>
+                      <StyledIconButton onClick={() => handleDelete(enrollment.id)} color="error">
+                        <DeleteIcon />
+                      </StyledIconButton>
+                    </TableCell>
+                  </StyledTableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </AnimatedTableContainer>
