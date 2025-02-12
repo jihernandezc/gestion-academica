@@ -129,4 +129,10 @@ export class ApiController {
   async findStudentsByNameOrLastName(@Param('name') name: string) {
     return this.studentsClient.send('find_students_by_name', name);
   }
+
+  @Get('courses/students-count')
+  async getStudentCountByCourses() {
+    return this.apiClient.send('get_student_count_by_courses', {});
+  }
+
 }

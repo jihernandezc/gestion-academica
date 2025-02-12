@@ -73,4 +73,10 @@ export class EnrollmentsController {
   getAssignedStudentsCountByCourses(): Promise<{ courseId: number, assignedCount: number }[]> {
     return this.enrollmentsService.getAssignedCountByCourses();
   }
+
+  @MessagePattern('get_unique_student_count_by_course')
+  getUniqueStudentCountByCourse(@Payload() courseId: number): Promise<number> {
+    return this.enrollmentsService.getUniqueStudentCountByCourseId(courseId);
+}
+
 }
