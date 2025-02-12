@@ -1,0 +1,22 @@
+Desde estudiantes 
+
+(Notas del estudiantes)
+GET-recibe(id-estudiante), retorna -> notas del estudiante en todos sus cursos
+GET-recibe(id-estudiante, id curso), retorna -> notas del estudiante en el curso x
+GET-recibe(id-estudiante) retorna -> todos los cursos en los que el estudiante esta inscrito OJ0/NOTA SOLO EN LOS QUE isAssigned SE ENCUENTRAN EN TRUE ();
+
+
+
+Desde materias
+Promedio de la materia //TODO
+cupos de la materia
+CRUDS
+
+
+
+
+
+
+
+
+

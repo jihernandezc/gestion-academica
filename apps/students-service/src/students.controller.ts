@@ -34,8 +34,9 @@ export class StudentsController {
     return this.studentsService.deleteStudent(id);
   }
 
-  @MessagePattern('hello')
-  getHello(): string {
-    return 'Hello from students-service!';
+
+  @MessagePattern('find_students_by_ids')
+  findStudentsByIds(@Payload() ids: number[]): Promise<Student[]> {
+    return this.studentsService.findStudentsByIds(ids);
   }
 }

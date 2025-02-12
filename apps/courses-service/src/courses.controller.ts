@@ -33,4 +33,10 @@ export class CoursesController {
   deleteCourse(@Payload() id: number): Promise<Course> {
     return this.coursesService.deleteCourse(id);
   }
+
+  @MessagePattern('get_max_students')
+  getMaxStudents(@Payload() courseId: number): Promise<number> {
+    return this.coursesService.getMaxStudents(courseId);
+  }
+  
 }

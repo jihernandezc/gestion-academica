@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ApiController } from './api.controller';
-import { ApiService } from './api.service';
 
 @Module({
   imports: [
@@ -30,9 +29,16 @@ import { ApiService } from './api.service';
           port: 6379,
         },
       },
+      {
+        name: 'API_SERVICE',
+        transport: Transport.REDIS,
+        options: {
+          host: 'redis',
+          port: 6379,
+        },
+      },
     ]),
   ],
   controllers: [ApiController],
-  providers: [ApiService],
 })
 export class ApiModule {}

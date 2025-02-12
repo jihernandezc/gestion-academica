@@ -47,8 +47,17 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api-gateway
+
   redis:
-    image: redis:6.2
+    image: redis:alpine
     ports:
       - "6379:6379"
 

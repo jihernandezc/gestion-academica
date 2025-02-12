@@ -7,9 +7,6 @@ export class CreateEnrollmentDto {
   @IsInt()
   readonly courseId: number;
 
-  @IsString()
-  readonly semester: string;
-
   @IsOptional()
   @IsInt()
   @Min(0)

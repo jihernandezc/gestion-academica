@@ -28,7 +28,11 @@ export class StudentsService {
     return this.prisma.student.delete({ where: { id } });
   }
 
-  async helloWorld(): Promise<string> {
-    return 'Hello World from StudentsService!';
+  async findStudentsByIds(ids: number[]): Promise<Student[]> {
+    return this.prisma.student.findMany({
+      where: {
+        id: { in: ids }
+      }
+    });
   }
 }

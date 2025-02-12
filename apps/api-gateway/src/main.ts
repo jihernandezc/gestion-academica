@@ -5,6 +5,12 @@ import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 async function bootstrap() {
   const app = await NestFactory.create(ApiModule);
 
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
+
   // Comunicación con microservicios a través de Redis
   app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.REDIS,

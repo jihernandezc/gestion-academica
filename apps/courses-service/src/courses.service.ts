@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
@@ -26,5 +26,15 @@ export class CoursesService {
 
   async deleteCourse(id: number): Promise<Course> {
     return this.prisma.course.delete({ where: { id } });
+  }
+
+  async getMaxStudents(courseId: number): Promise<number> {
+    const course = await this.prisma.course.findUnique({ where: { id: courseId } });
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    return course.maxStudents;
   }
 }
