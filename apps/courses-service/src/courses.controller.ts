@@ -34,9 +34,14 @@ export class CoursesController {
     return this.coursesService.deleteCourse(id);
   }
 
-  @MessagePattern('get_max_students')
-  getMaxStudents(@Payload() courseId: number): Promise<number> {
-    return this.coursesService.getMaxStudents(courseId);
+  @MessagePattern('get_max_students_by_courses')
+  getMaxStudentsByCourses(): Promise<{ id: number, maxStudents: number }[]> {
+    return this.coursesService.getMaxStudentsByCourses();
+  }
+
+  @MessagePattern('find_courses_by_name')
+  findCoursesByName(@Payload() name: string): Promise<Course[]> {
+    return this.coursesService.findCoursesByName(name);
   }
   
 }

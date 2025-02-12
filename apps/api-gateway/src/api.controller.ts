@@ -16,15 +16,6 @@ export class ApiController {
     @Inject('API_SERVICE') private readonly apiClient: ClientProxy,
   ) {}
 
-  /*
-
-  * this.(nameservice)Client.sent('nombre-clave' {data}) es linea debe tener el 
-  * nombre del microservicio su nombre clave para que redis le avise que debe 
-  * hacer algo y le responda al apigateway
-  * {data} son los elementos que nos pasan por body en caso de no pasarlos {vacio}
-  
-  */
-  
   //Retorna todos los cursos
   @Get('courses')
   async getCourses() {
@@ -43,7 +34,7 @@ export class ApiController {
     return this.coursesClient.send('create_course', createCourseDto);
   }
   
-  @Put('courses/:id')
+  @Put('courses/update/:id')
   async updateCourse(@Param('id') id: number, @Body() updateCourseDto: UpdateCourseDto) {
     return this.coursesClient.send('update_course', { id, data: updateCourseDto });
   }
@@ -51,6 +42,11 @@ export class ApiController {
   @Delete('courses/:id')
   async deleteCourse(@Param('id') id: number) {
     return this.coursesClient.send('delete_course', id);
+  }
+
+  @Get('courses/search/:name')
+  async findCoursesByName(@Param('name') name: string) {
+    return this.coursesClient.send('find_courses_by_name', name);
   }
 
   // Metodos HTTP de matriculas desde el apigateway
@@ -115,9 +111,6 @@ export class ApiController {
   //Recibe por ruta un id y por body un json con los atributos a modificar del estudiante y esto cambiara el recurso en BD
   @Put('students/update/:id')
   async updateStudent(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
-    console.log('ID recibido:', id);
-    console.log('Datos recibidos:', updateStudentDto);
-  
     return this.studentsClient.send('update_student', { id: +id, data: updateStudentDto });
   }
 

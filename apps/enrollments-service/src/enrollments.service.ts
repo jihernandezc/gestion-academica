@@ -98,4 +98,19 @@ export class EnrollmentsService {
       where: { courseId, isAssigned: false }
     });
   }
+
+  async getAssignedCountByCourses(): Promise<{ courseId: number; assignedCount: number }[]> {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { isAssigned: true },
+      select: { courseId: true }
+    });
+
+    const courses = Array.from(new Set(enrollments.map(enrollment => enrollment.courseId)));
+    const assignedCount = courses.map(courseId => ({
+      courseId,
+      assignedCount: enrollments.filter(enrollment => enrollment.courseId === courseId).length
+    }));
+
+    return assignedCount;
+  }
 }

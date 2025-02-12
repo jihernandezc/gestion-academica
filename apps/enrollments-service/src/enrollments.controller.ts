@@ -64,8 +64,13 @@ export class EnrollmentsController {
     return this.enrollmentsService.getAverageGradeByCourseId(courseId);
   }
 
-  @MessagePattern('get_assisgned_count_by_course')
+  @MessagePattern('get_assisgned_count_by_course_id')
   getAssignedStudentsCountByCourseId(@Payload() courseId: number): Promise<number> {
     return this.enrollmentsService.getAssignedCountByCourseId(courseId);
+  }
+
+  @MessagePattern('get_assigned_count_by_courses') 
+  getAssignedStudentsCountByCourses(): Promise<{ courseId: number, assignedCount: number }[]> {
+    return this.enrollmentsService.getAssignedCountByCourses();
   }
 }
