@@ -59,29 +59,29 @@ const Estudiantes: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (currentEstudiante) {
-      try {
-        let estudianteData = {
-          ...currentEstudiante,
-          id: Number(currentEstudiante.id), // Ensure id is a number
-        };
-
-        console.log("Datos que se envían al backend:", estudianteData); // Agrega este console.log
-
-        if (estudianteData.id === 0) {
-          // Crear nuevo estudiante
-          const { id, ...dataWithoutId } = estudianteData; // Eliminar el id del objeto
-          const response = await axios.post(API_URL, dataWithoutId);
-          setEstudiantes([...estudiantes, response.data]);
-        } else {
-          // Editar estudiante existente
-          await axios.put(`${API_URL}/${estudianteData.id}`, estudianteData);
-          setEstudiantes(estudiantes.map((e) => (e.id === estudianteData.id ? estudianteData : e)));
-        }
-        handleClose();
-      } catch (error) {
-        console.error("Error al guardar estudiante:", error);
+    if (!currentEstudiante) return;
+  
+    try {
+      // Crear un objeto sin el id
+      let { id, ...estudianteData } = currentEstudiante;
+  
+      console.log("Datos que se envían al backend:", estudianteData);
+  
+      if (!id || Number(id) === 0) {
+        // Crear nuevo estudiante (POST)
+        const response = await axios.post(API_URL, estudianteData);
+        setEstudiantes([...estudiantes, response.data]);
+      } else {
+        // Editar estudiante existente (PUT)
+        await axios.put(`${API_URL}/update/${id}`, estudianteData);
+        setEstudiantes((prev) =>
+          prev.map((e) => (e.id === id ? { ...e, ...estudianteData } : e))
+        );
       }
+  
+      handleClose();
+    } catch (error) {
+      console.error("Error al guardar estudiante:", error);
     }
   };
 
@@ -160,10 +160,9 @@ const Estudiantes: React.FC = () => {
                 <TableCell>{estudiante.phone}</TableCell>
                 <TableCell>{estudiante.career}</TableCell>
                 <TableCell>
-                  <Button onClick={() => handleOpen(estudiante)}>Editar</Button>
-                  <Button color="secondary" onClick={() => handleDelete(estudiante.id)}>
-                    Borrar
-                  </Button>
+                <Button component="button" onClick={() => handleOpen(estudiante)}>Editar</Button>
+<Button component="button" color="secondary" onClick={() => handleDelete(estudiante.id)}>Borrar</Button>
+
                 </TableCell>
               </TableRow>
             ))}

@@ -113,8 +113,11 @@ export class ApiController {
   }
 
   //Recibe por ruta un id y por body un json con los atributos a modificar del estudiante y esto cambiara el recurso en BD
-  @Put('students/:id')
+  @Put('students/update/:id')
   async updateStudent(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
+    console.log('ID recibido:', id);
+    console.log('Datos recibidos:', updateStudentDto);
+  
     return this.studentsClient.send('update_student', { id: +id, data: updateStudentDto });
   }
 
