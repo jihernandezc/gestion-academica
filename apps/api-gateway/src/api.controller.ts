@@ -70,15 +70,15 @@ export class ApiController {
   }
   
   //Recibe por ruta un id y por body un json con los atributos a modificar de la matricula y esto cambiara el recurso en BD
-  @Put('enrollments/:id')
-  async updateEnrollment(@Param('id') id: number, @Body() updateEnrollmentDto: UpdateEnrollmentDto) {
-    return this.enrollmentsClient.send('update_enrollment', { id, data: updateEnrollmentDto });
+  @Put('enrollments/update/:id')
+  async updateEnrollment(@Param('id') id: string, @Body() updateEnrollmentDto: UpdateEnrollmentDto) {
+    return this.enrollmentsClient.send('update_enrollment', { id: +id, data: updateEnrollmentDto });
   }
   
   //Recibe por la ruta el id del estudiante que se desea elimnar de la BD
   @Delete('enrollments/:id')
-  async deleteEnrollment(@Param('id') id: number) {
-    return this.enrollmentsClient.send('delete_enrollment', id);
+  async deleteEnrollment(@Param('id') id: string) {
+    return this.enrollmentsClient.send('delete_enrollment', +id);
   }
 
   // Metodos HTTP de estudiantes desde el apigateway

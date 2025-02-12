@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import type React from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Typography,
@@ -12,18 +13,23 @@ import {
   TableRow,
   Paper,
   Button,
+  TextField,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  CircularProgress,
+  IconButton,
   Box,
-  MenuItem,
+  Chip,
+  CircularProgress,
   Select,
+  MenuItem,
   FormControl,
   InputLabel,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { styled, keyframes } from "@mui/material/styles";
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon } from "@mui/icons-material";
+import debounce from "lodash/debounce";
 
 interface Enrollment {
   id: number;
@@ -42,13 +48,20 @@ interface Student {
 interface Course {
   id: number;
   name: string;
-  maxStudents: number;
-  description: string;
-  category: string;
 }
 
-// URL del API Gateway
-const API_GATEWAY_URL = "http://localhost:4000";
+const API_URL = "http://localhost:4000";
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   "&.MuiTableCell-head": {
@@ -71,28 +84,64 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
+const AnimatedTableContainer = styled(TableContainer)`
+  animation: ${fadeIn} 0.5s ease-out;
+`;
+
+const StyledChip = styled(Chip)(({ theme }) => ({
+  background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.light} 90%)`,
+  color: theme.palette.primary.contrastText,
+  fontWeight: "bold",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    transform: "scale(1.05)",
+    boxShadow: "0 3px 5px 2px rgba(33, 203, 243, .3)",
+  },
+}));
+
+const StyledButton = styled(Button)`
+  transition: all 0.3s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const StyledIconButton = styled(IconButton)`
+  transition: all 0.3s ease;
+  &:hover {
+    transform: scale(1.1);
+  }
+`;
+
+const StyledDialog = styled(Dialog)`
+  .MuiDialog-paper {
+    animation: ${fadeIn} 0.3s ease-out;
+  }
+`;
+
 const Enrollments: React.FC = () => {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
+  const [currentEnrollment, setCurrentEnrollment] = useState<Enrollment | null>(null);
+  const [searchName, setSearchName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [filterAssigned, setFilterAssigned] = useState<string>("all");
 
-  useEffect(() => {
-    fetchEnrollments();
-    fetchStudents();
-    fetchCoursesWithAvailableSeats();
-  }, []);
-
-  const fetchEnrollments = async () => {
+  const fetchEnrollments = async (search = "", filter = "all") => {
     setLoading(true);
     try {
-      const response = await axios.get<Enrollment[]>(`${API_GATEWAY_URL}/enrollments`);
-      setEnrollments(response.data);
+      const url = search ? `${API_URL}/enrollments/search?name=${search}` : `${API_URL}/enrollments`;
+      const response = await axios.get<Enrollment[]>(url);
+      let data = response.data;
+      if (filter !== "all") {
+        data = data.filter((enrollment) => (filter === "assigned" ? enrollment.isAssigned : !enrollment.isAssigned));
+      }
+      setEnrollments(data);
     } catch (error) {
-      console.error("Error al cargar las matrículas:", error);
+      console.error("Error al obtener matriculas:", error);
     } finally {
       setLoading(false);
     }
@@ -100,30 +149,43 @@ const Enrollments: React.FC = () => {
 
   const fetchStudents = async () => {
     try {
-      const response = await axios.get<Student[]>(`${API_GATEWAY_URL}/students`);
+      const response = await axios.get<Student[]>(`${API_URL}/students`);
       setStudents(response.data);
     } catch (error) {
-      console.error("Error al cargar los estudiantes:", error);
+      console.error("Error al obtener estudiantes:", error);
     }
   };
 
-  const fetchAvailableCourses = async () => {
+  const fetchCourses = async () => {
     try {
-        const response = await axios.get<Course[]>(`${API_GATEWAY_URL}/courses/assigned-counts`);
-        const allCourses = response.data;
-    
-        // Filtrar solo los cursos con cupos disponibles
-        const availableCourses = allCourses.filter(course => course.maxStudents > (course as any).enrolledStudents);
-        
-        setCourses(availableCourses);
-      } catch (error) {
-        console.error("Error al cargar los cursos:", error);
-      }
-    };
+      const response = await axios.get<Course[]>(`${API_URL}/courses`);
+      setCourses(response.data);
+    } catch (error) {
+      console.error("Error al obtener cursos:", error);
+    }
+  };
 
-  const handleOpen = () => {
-    setSelectedStudent(null);
-    setSelectedCourse(null);
+  useEffect(() => {
+    fetchEnrollments();
+    fetchStudents();
+    fetchCourses();
+  }, []);
+
+  const debouncedSearch = useCallback(
+    debounce((searchTerm: string) => fetchEnrollments(searchTerm, filterAssigned), 300),
+    [filterAssigned]
+  );
+
+  useEffect(() => {
+    debouncedSearch(searchName);
+  }, [searchName, debouncedSearch]);
+
+  useEffect(() => {
+    fetchEnrollments(searchName, filterAssigned);
+  }, [filterAssigned]);
+
+  const handleOpen = (enrollment: Enrollment | null = null) => {
+    setCurrentEnrollment(enrollment || { id: 0, studentId: 0, courseId: 0, isAssigned: false });
     setOpen(true);
   };
 
@@ -132,22 +194,39 @@ const Enrollments: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (selectedStudent && selectedCourse) {
-      try {
-        setLoading(true);
-        const enrollmentData = {
-          studentId: selectedStudent,
-          courseId: selectedCourse,
-          isAssigned: true,
-        };
-        const response = await axios.post(`${API_GATEWAY_URL}/enrollments`, enrollmentData);
+    if (!currentEnrollment) return;
+
+    try {
+      setLoading(true);
+      const { id, ...enrollmentData } = currentEnrollment;
+
+      if (!id || Number(id) === 0) {
+        const response = await axios.post(`${API_URL}/enrollments`, enrollmentData);
         setEnrollments([...enrollments, response.data]);
-        handleClose();
-      } catch (error) {
-        console.error("Error al guardar la matrícula:", error);
-      } finally {
-        setLoading(false);
+      } else {
+        await axios.put(`${API_URL}/enrollments/update/${id}`, enrollmentData);
+        setEnrollments((prev) => prev.map((e) => (e.id === id ? { ...e, ...enrollmentData } : e)));
       }
+
+      handleClose();
+    } catch (error) {
+      console.error("Error al guardar matricula:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("¿Seguro que quieres eliminar esta matricula?")) return;
+
+    try {
+      setLoading(true);
+      await axios.delete(`${API_URL}/enrollments/${id}`);
+      setEnrollments(enrollments.filter((e) => e.id !== id));
+    } catch (error) {
+      console.error("Error al eliminar matricula:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -156,47 +235,84 @@ const Enrollments: React.FC = () => {
       <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: "bold", color: "primary.main" }}>
         Matrículas
       </Typography>
-      <Button variant="contained" color="primary" onClick={handleOpen} style={{ marginBottom: "20px" }}>
-        Matricular Estudiante
-      </Button>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+        <StyledButton variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => handleOpen()}>
+          Agregar Matrícula
+        </StyledButton>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <TextField
+            label="Buscar matrícula"
+            variant="outlined"
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            size="small"
+          />
+          <FormControl variant="outlined" size="small">
+            <InputLabel>Filtrar por asignación</InputLabel>
+            <Select
+              value={filterAssigned}
+              onChange={(e) => setFilterAssigned(e.target.value)}
+              label="Filtrar por asignación"
+            >
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="assigned">Asignados</MenuItem>
+              <MenuItem value="unassigned">No Asignados</MenuItem>
+            </Select>
+          </FormControl>
+          <StyledButton variant="contained" color="primary" onClick={() => fetchEnrollments(searchName, filterAssigned)} startIcon={<SearchIcon />}>
+            Buscar
+          </StyledButton>
+        </Box>
+      </Box>
       {loading ? (
         <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
           <CircularProgress />
         </Box>
       ) : (
-        <TableContainer component={Paper} elevation={3}>
+        <AnimatedTableContainer component={Paper} elevation={3}>
           <Table>
             <TableHead>
               <TableRow>
                 <StyledTableCell>ID</StyledTableCell>
-                <StyledTableCell>Estudiante ID</StyledTableCell>
-                <StyledTableCell>Curso ID</StyledTableCell>
+                <StyledTableCell>Estudiante</StyledTableCell>
+                <StyledTableCell>Curso</StyledTableCell>
                 <StyledTableCell>Nota Final</StyledTableCell>
                 <StyledTableCell>Asignado</StyledTableCell>
+                <StyledTableCell align="center">Acciones</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {enrollments.map((enrollment) => (
                 <StyledTableRow key={enrollment.id}>
                   <TableCell>{enrollment.id}</TableCell>
-                  <TableCell>{enrollment.studentId}</TableCell>
-                  <TableCell>{enrollment.courseId}</TableCell>
+                  <TableCell>{students.find((s) => s.id === enrollment.studentId)?.name}</TableCell>
+                  <TableCell>{courses.find((c) => c.id === enrollment.courseId)?.name}</TableCell>
                   <TableCell>{enrollment.finalGrade ?? "N/A"}</TableCell>
-                  <TableCell>{enrollment.isAssigned ? "Sí" : "No"}</TableCell>
+                  <TableCell>
+                    <StyledChip label={enrollment.isAssigned ? "Sí" : "No"} />
+                  </TableCell>
+                  <TableCell align="center">
+                    <StyledIconButton onClick={() => handleOpen(enrollment)} color="primary">
+                      <EditIcon />
+                    </StyledIconButton>
+                    <StyledIconButton onClick={() => handleDelete(enrollment.id)} color="error">
+                      <DeleteIcon />
+                    </StyledIconButton>
+                  </TableCell>
                 </StyledTableRow>
               ))}
             </TableBody>
           </Table>
-        </TableContainer>
+        </AnimatedTableContainer>
       )}
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Matricular Estudiante</DialogTitle>
+      <StyledDialog open={open} onClose={handleClose}>
+        <DialogTitle>{currentEnrollment && currentEnrollment.id ? "Editar Matrícula" : "Agregar Matrícula"}</DialogTitle>
         <DialogContent>
           <FormControl fullWidth margin="dense">
             <InputLabel>Estudiante</InputLabel>
             <Select
-              value={selectedStudent ?? ""}
-              onChange={(e) => setSelectedStudent(Number(e.target.value))}
+              value={currentEnrollment?.studentId ?? ""}
+              onChange={(e) => setCurrentEnrollment({ ...currentEnrollment!, studentId: Number(e.target.value) })}
               label="Estudiante"
             >
               {students.map((student) => (
@@ -209,8 +325,8 @@ const Enrollments: React.FC = () => {
           <FormControl fullWidth margin="dense">
             <InputLabel>Curso</InputLabel>
             <Select
-              value={selectedCourse ?? ""}
-              onChange={(e) => setSelectedCourse(Number(e.target.value))}
+              value={currentEnrollment?.courseId ?? ""}
+              onChange={(e) => setCurrentEnrollment({ ...currentEnrollment!, courseId: Number(e.target.value) })}
               label="Curso"
             >
               {courses.map((course) => (
@@ -220,14 +336,33 @@ const Enrollments: React.FC = () => {
               ))}
             </Select>
           </FormControl>
+          <TextField
+            margin="dense"
+            label="Nota Final"
+            fullWidth
+            type="number"
+            value={currentEnrollment?.finalGrade ?? ""}
+            onChange={(e) => setCurrentEnrollment({ ...currentEnrollment!, finalGrade: Number(e.target.value) })}
+          />
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Asignado</InputLabel>
+            <Select
+              value={currentEnrollment?.isAssigned ? "Sí" : "No"}
+              onChange={(e) => setCurrentEnrollment({ ...currentEnrollment!, isAssigned: e.target.value === "Sí" })}
+              label="Asignado"
+            >
+              <MenuItem value="Sí">Sí</MenuItem>
+              <MenuItem value="No">No</MenuItem>
+            </Select>
+          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancelar</Button>
-          <Button onClick={handleSave} color="primary" variant="contained">
+          <StyledButton onClick={handleSave} variant="contained" color="primary">
             Guardar
-          </Button>
+          </StyledButton>
         </DialogActions>
-      </Dialog>
+      </StyledDialog>
     </Box>
   );
 };
