@@ -5,6 +5,7 @@ import Layout from "./components/Layout.tsx"
 import Dashboard from "./pages/Dashboard"
 import Estudiantes from "./pages/Estudiantes"
 import Cursos from "./pages/Cursos"
+import Enrollments from "./pages/Enrollments"
 
 const theme = createTheme()
 
@@ -18,6 +19,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/estudiantes" element={<Estudiantes />} />
             <Route path="/cursos" element={<Cursos />} />
+            <Route path="/matriculas" element={<Enrollments />} />
           </Routes>
         </Layout>
       </Router>

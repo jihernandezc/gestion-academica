@@ -1,5 +1,7 @@
-import * as React from "react";
-import { useState, useEffect } from "react";
+"use client";
+
+import type React from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Typography,
@@ -16,7 +18,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
+  Box,
+  Chip,
+  CircularProgress,
 } from "@mui/material";
+import { styled, keyframes } from "@mui/material/styles";
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon } from "@mui/icons-material";
+import debounce from "lodash/debounce";
 
 interface Estudiante {
   id: number;
@@ -29,25 +38,106 @@ interface Estudiante {
 
 const API_URL = "http://localhost:4000/students";
 
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  "&.MuiTableCell-head": {
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+    fontWeight: "bold",
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  transition: "background-color 0.3s ease",
+  "&:nth-of-type(odd)": {
+    backgroundColor: theme.palette.action.hover,
+  },
+  "&:hover": {
+    backgroundColor: theme.palette.action.selected,
+  },
+  "&:last-child td, &:last-child th": {
+    border: 0,
+  },
+}));
+
+const AnimatedTableContainer = styled(TableContainer)`
+  animation: ${fadeIn} 0.5s ease-out;
+`;
+
+const StyledChip = styled(Chip)(({ theme }) => ({
+  background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.primary.light} 90%)`,
+  color: theme.palette.primary.contrastText,
+  fontWeight: "bold",
+  transition: "all 0.3s ease",
+  "&:hover": {
+    transform: "scale(1.05)",
+    boxShadow: "0 3px 5px 2px rgba(33, 203, 243, .3)",
+  },
+}));
+
+const StyledButton = styled(Button)`
+  transition: all 0.3s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const StyledIconButton = styled(IconButton)`
+  transition: all 0.3s ease;
+  &:hover {
+    transform: scale(1.1);
+  }
+`;
+
+const StyledDialog = styled(Dialog)`
+  .MuiDialog-paper {
+    animation: ${fadeIn} 0.3s ease-out;
+  }
+`;
+
 const Estudiantes: React.FC = () => {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [open, setOpen] = useState(false);
   const [currentEstudiante, setCurrentEstudiante] = useState<Estudiante | null>(null);
   const [searchName, setSearchName] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Cargar estudiantes desde la API
+  const fetchEstudiantes = async (search = "") => {
+    setLoading(true);
+    try {
+      const url = search ? `${API_URL}/search/${search}` : API_URL;
+      const response = await axios.get<Estudiante[]>(url);
+      setEstudiantes(response.data);
+    } catch (error) {
+      console.error("Error al obtener estudiantes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchEstudiantes();
   }, []);
 
-  const fetchEstudiantes = async () => {
-    try {
-      const response = await axios.get<Estudiante[]>(API_URL);
-      setEstudiantes(response.data);
-    } catch (error) {
-      console.error("Error al obtener estudiantes:", error);
-    }
-  };
+  const debouncedSearch = useCallback(
+    debounce((searchTerm: string) => fetchEstudiantes(searchTerm), 300),
+    []
+  );
+
+  useEffect(() => {
+    debouncedSearch(searchName);
+  }, [searchName, debouncedSearch]);
 
   const handleOpen = (estudiante: Estudiante | null = null) => {
     setCurrentEstudiante(estudiante || { id: 0, name: "", lastName: "", email: "", phone: "", career: "" });
@@ -60,28 +150,24 @@ const Estudiantes: React.FC = () => {
 
   const handleSave = async () => {
     if (!currentEstudiante) return;
-  
+
     try {
-      // Crear un objeto sin el id
-      let { id, ...estudianteData } = currentEstudiante;
-  
-      console.log("Datos que se envían al backend:", estudianteData);
-  
+      setLoading(true);
+      const { id, ...estudianteData } = currentEstudiante;
+
       if (!id || Number(id) === 0) {
-        // Crear nuevo estudiante (POST)
         const response = await axios.post(API_URL, estudianteData);
         setEstudiantes([...estudiantes, response.data]);
       } else {
-        // Editar estudiante existente (PUT)
         await axios.put(`${API_URL}/update/${id}`, estudianteData);
-        setEstudiantes((prev) =>
-          prev.map((e) => (e.id === id ? { ...e, ...estudianteData } : e))
-        );
+        setEstudiantes((prev) => prev.map((e) => (e.id === id ? { ...e, ...estudianteData } : e)));
       }
-  
+
       handleClose();
     } catch (error) {
       console.error("Error al guardar estudiante:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -89,90 +175,81 @@ const Estudiantes: React.FC = () => {
     if (!window.confirm("¿Seguro que quieres eliminar este estudiante?")) return;
 
     try {
+      setLoading(true);
       await axios.delete(`${API_URL}/${id}`);
       setEstudiantes(estudiantes.filter((e) => e.id !== id));
     } catch (error) {
       console.error("Error al eliminar estudiante:", error);
-    }
-  };
-
-  const handleSearch = async () => {
-    if (!searchName.trim()) {
-      alert("Por favor, ingresa un nombre o apellido válido");
-      return;
-    }
-  
-    try {
-      const response = await axios.get<Estudiante[]>(`${API_URL}/search/${searchName}`);
-  
-      if (response.data.length > 0) {
-        setEstudiantes(response.data);
-      } else {
-        alert("Estudiante no encontrado");
-      }
-    } catch (error: any) {
-      alert("Ocurrió un error al buscar el estudiante");
-      console.error("Error al buscar estudiante:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ maxWidth: 1200, margin: "0 auto", padding: 3 }}>
+      <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: "bold", color: "primary.main" }}>
         Estudiantes
       </Typography>
-      <Button variant="contained" color="primary" onClick={() => handleOpen()} style={{ marginBottom: "20px" }}>
-        Agregar Estudiante
-      </Button>
-      <TextField
-        label="Buscar por Nombre"
-        variant="outlined"
-        value={searchName}
-        onChange={(e) => setSearchName(e.target.value)}
-        style={{ marginLeft: "20px", marginBottom: "20px" }}
-      />
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={handleSearch}
-        style={{ marginLeft: "20px", marginBottom: "20px" }}
-      >
-        Buscar
-      </Button>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Nombre Completo</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Teléfono</TableCell>
-              <TableCell>Carrera</TableCell>
-              <TableCell>Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {estudiantes.map((estudiante) => (
-              <TableRow key={estudiante.id}>
-                <TableCell>{estudiante.id}</TableCell>
-                <TableCell>{`${estudiante.name} ${estudiante.lastName}`}</TableCell>
-                <TableCell>{estudiante.email}</TableCell>
-                <TableCell>{estudiante.phone}</TableCell>
-                <TableCell>{estudiante.career}</TableCell>
-                <TableCell>
-                <Button component="button" onClick={() => handleOpen(estudiante)}>Editar</Button>
-<Button component="button" color="secondary" onClick={() => handleDelete(estudiante.id)}>Borrar</Button>
-
-                </TableCell>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+        <StyledButton variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => handleOpen()}>
+          Agregar Estudiante
+        </StyledButton>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <TextField
+            label="Buscar estudiante"
+            variant="outlined"
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            size="small"
+          />
+          <StyledButton variant="contained" color="primary" onClick={() => fetchEstudiantes(searchName)} startIcon={<SearchIcon />}>
+            Buscar
+          </StyledButton>
+        </Box>
+      </Box>
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <AnimatedTableContainer component={Paper} elevation={3}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <StyledTableCell>ID</StyledTableCell>
+                <StyledTableCell>Nombre Completo</StyledTableCell>
+                <StyledTableCell>Email</StyledTableCell>
+                <StyledTableCell>Teléfono</StyledTableCell>
+                <StyledTableCell>Carrera</StyledTableCell>
+                <StyledTableCell align="center">Acciones</StyledTableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>
-          {currentEstudiante && currentEstudiante.id ? "Editar Estudiante" : "Agregar Estudiante"}
-        </DialogTitle>
+            </TableHead>
+            <TableBody>
+              {estudiantes.map((estudiante) => (
+                <StyledTableRow key={estudiante.id}>
+                  <TableCell>{estudiante.id}</TableCell>
+                  <TableCell>{`${estudiante.name} ${estudiante.lastName}`}</TableCell>
+                  <TableCell>{estudiante.email}</TableCell>
+                  <TableCell>{estudiante.phone}</TableCell>
+                  <TableCell>
+                    <StyledChip label={estudiante.career} />
+                  </TableCell>
+                  <TableCell align="center">
+                    <StyledIconButton onClick={() => handleOpen(estudiante)} color="primary">
+                      <EditIcon />
+                    </StyledIconButton>
+                    <StyledIconButton onClick={() => handleDelete(estudiante.id)} color="error">
+                      <DeleteIcon />
+                    </StyledIconButton>
+                  </TableCell>
+                </StyledTableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </AnimatedTableContainer>
+      )}
+      <StyledDialog open={open} onClose={handleClose}>
+        <DialogTitle>{currentEstudiante && currentEstudiante.id ? "Editar Estudiante" : "Agregar Estudiante"}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -213,10 +290,12 @@ const Estudiantes: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancelar</Button>
-          <Button onClick={handleSave}>Guardar</Button>
+          <StyledButton onClick={handleSave} variant="contained" color="primary">
+            Guardar
+          </StyledButton>
         </DialogActions>
-      </Dialog>
-    </div>
+      </StyledDialog>
+    </Box>
   );
 };
 

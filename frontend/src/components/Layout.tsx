@@ -54,6 +54,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { text: "Dashboard", icon: <DashboardIcon />, path: "/" },
     { text: "Estudiantes", icon: <PeopleIcon />, path: "/estudiantes" },
     { text: "Cursos", icon: <SchoolIcon />, path: "/cursos" },
+    { text: "Matriculas", icon: <SchoolIcon />, path: "/matriculas" }
   ]
 
   return (
