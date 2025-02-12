@@ -39,4 +39,9 @@ export class StudentsController {
   findStudentsByIds(@Payload() ids: number[]): Promise<Student[]> {
     return this.studentsService.findStudentsByIds(ids);
   }
+
+  @MessagePattern('find_students_by_name')
+  findStudentsByName(@Payload() name: string): Promise<Student[]> {
+    return this.studentsService.findStudentsByName(name);
+  }
 }

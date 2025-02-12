@@ -94,19 +94,18 @@ export class ApiController {
     return this.studentsClient.send('get_students', {});
   }
   
-  //Recibe un id desde la ruta variable (students/1) debera retornar el estudiante con el id 1
-  @Get('students/find/:id')
-  async getStudentById(@Param('id') id: number) {
-    return this.studentsClient.send('get_student', id);
-  }
-  
   //Recibe una lista de ids separada por coma (/students/get/by-ids?ids=1,2,3,4) y retornara esos estudiantes en caso de estar en la BD
   @Get('/students/multiple/by-ids')
   async findStudentsByIds(@Query('ids') ids: string) {
     const idsArray = ids.split(',').map(id => parseInt(id, 10));
     return this.studentsClient.send('find_students_by_ids', idsArray);
   }
-
+  //Recibe un id desde la ruta variable (students/1) debera retornar el estudiante con el id 1
+  @Get('students/find/:id')
+  async getStudentById(@Param('id') id: number) {
+    return this.studentsClient.send('get_student', id);
+  }
+  
   //Recibe un JSON con la estructura minima de un estudiante(el json con los campos obligatorios) y crea el estudiante en BD
   @Post('students')
   async createStudent(@Body() createStudentDto: CreateStudentDto) {
@@ -130,4 +129,8 @@ export class ApiController {
     return this.apiClient.send('get_available_count_by_course', courseId);
   }
 
+  @Get('name/students/:name')
+  async findStudentsByName(@Param('name') name: string) {
+    return this.studentsClient.send('find_students_by_name', name);
+  }
 }

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import * as React from "react";
 import { useState, useEffect } from "react";
@@ -29,23 +29,27 @@ interface Estudiante {
   career: string;
 }
 
+const API_URL = "http://localhost:4000/students";
+
 const Estudiantes: React.FC = () => {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
-
-  useEffect(() => {
-    axios.get<Estudiante[]>("http://localhost:4000/students")
-      .then((response) => {
-        console.log("Datos recibidos:", response.data); // Verifica en la consola
-        setEstudiantes(response.data);
-      })
-      .catch((error) => {
-        console.error("Error al obtener estudiantes:", error);
-      });
-  }, []);
-
   const [open, setOpen] = useState(false);
   const [currentEstudiante, setCurrentEstudiante] = useState<Estudiante | null>(null);
   const [searchId, setSearchId] = useState("");
+
+  // Cargar estudiantes desde la API
+  useEffect(() => {
+    fetchEstudiantes();
+  }, []);
+
+  const fetchEstudiantes = async () => {
+    try {
+      const response = await axios.get<Estudiante[]>(API_URL);
+      setEstudiantes(response.data);
+    } catch (error) {
+      console.error("Error al obtener estudiantes:", error);
+    }
+  };
 
   const handleOpen = (estudiante: Estudiante | null = null) => {
     setCurrentEstudiante(estudiante || { id: 0, name: "", lastName: "", email: "", phone: "", career: "" });
@@ -56,28 +60,69 @@ const Estudiantes: React.FC = () => {
     setOpen(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (currentEstudiante) {
-      if (currentEstudiante.id === 0) {
-        setEstudiantes([...estudiantes, { ...currentEstudiante, id: estudiantes.length + 1 }]);
-      } else {
-        setEstudiantes(estudiantes.map((e) => (e.id === currentEstudiante.id ? currentEstudiante : e)));
+      try {
+        const estudianteData = {
+          ...currentEstudiante,
+          id: Number(currentEstudiante.id), 
+        };
+  
+        if (estudianteData.id === 0) {
+          // Crear nuevo estudiante
+          const response = await axios.post(API_URL, estudianteData);
+          setEstudiantes([...estudiantes, response.data]);
+        } else {
+          // Editar estudiante existente
+          await axios.put(`${API_URL}/${estudianteData.id}`, estudianteData);
+          setEstudiantes(estudiantes.map((e) => (e.id === estudianteData.id ? estudianteData : e)));
+        }
+        handleClose();
+      } catch (error) {
+        console.error("Error al guardar estudiante:", error);
       }
     }
-    handleClose();
+  };
+  
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("¿Seguro que quieres eliminar este estudiante?")) return;
+
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      setEstudiantes(estudiantes.filter((e) => e.id !== id));
+    } catch (error) {
+      console.error("Error al eliminar estudiante:", error);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setEstudiantes(estudiantes.filter((e) => e.id !== id));
-  };
+  const handleSearch = async () => {
+    if (!searchId.trim()) {
+      alert("Por favor, ingresa un ID válido");
+      return;
+    }
 
-  const handleSearch = () => {
-    const id = Number.parseInt(searchId);
-    const estudiante = estudiantes.find((e) => e.id === id);
-    if (estudiante) {
-      handleOpen(estudiante);
-    } else {
-      alert("Estudiante no encontrado");
+    const idNumber = Number(searchId);
+    if (isNaN(idNumber) || idNumber <= 0) {
+      alert("El ID debe ser un número válido");
+      return;
+    }
+
+    try {
+      const response = await axios.get<Estudiante>(`${API_URL}/find/${idNumber}`);
+
+      if (response.data) {
+        handleOpen(response.data);
+      } else {
+        alert("Estudiante no encontrado");
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        alert("Estudiante no encontrado");
+      } else {
+        alert("Ocurrió un error al buscar el estudiante");
+        console.error("Error al buscar estudiante:", error);
+      }
     }
   };
 
@@ -128,7 +173,9 @@ const Estudiantes: React.FC = () => {
                 <TableCell>{estudiante.career}</TableCell>
                 <TableCell>
                   <Button onClick={() => handleOpen(estudiante)}>Editar</Button>
-                  <Button onClick={() => handleDelete(estudiante.id)}>Borrar</Button>
+                  <Button color="secondary" onClick={() => handleDelete(estudiante.id)}>
+                    Borrar
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
