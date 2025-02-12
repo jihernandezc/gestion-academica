@@ -129,8 +129,8 @@ export class ApiController {
     return this.apiClient.send('get_available_count_by_course', courseId);
   }
 
-  @Get('students/name/:name')
-  async findStudentsByName(@Param('name') name: string) {
+  @Get('students/search/:name')
+  async findStudentsByNameOrLastName(@Param('name') name: string) {
     return this.studentsClient.send('find_students_by_name', name);
   }
 }

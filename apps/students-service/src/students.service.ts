@@ -36,11 +36,14 @@ export class StudentsService {
     });
   }
 
-  async findStudentsByName(name: string): Promise<Student[]> {
+  async findStudentsByNameOrLastName(name: string): Promise<Student[]> {
     return this.prisma.student.findMany({
       where: {
-        name: { contains: name }
-      }
+        OR: [
+          { name: { contains: name, mode: 'insensitive' } },
+          { lastName: { contains: name, mode: 'insensitive' } },
+        ],
+      },
     });
   }
 }

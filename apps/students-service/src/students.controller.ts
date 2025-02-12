@@ -42,6 +42,6 @@ export class StudentsController {
 
   @MessagePattern('find_students_by_name')
   findStudentsByName(@Payload() name: string): Promise<Student[]> {
-    return this.studentsService.findStudentsByName(name);
+    return this.studentsService.findStudentsByNameOrLastName(name);
   }
 }

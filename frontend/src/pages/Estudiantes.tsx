@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -67,9 +65,9 @@ const Estudiantes: React.FC = () => {
           ...currentEstudiante,
           id: Number(currentEstudiante.id), // Ensure id is a number
         };
-  
+
         console.log("Datos que se envían al backend:", estudianteData); // Agrega este console.log
-  
+
         if (estudianteData.id === 0) {
           // Crear nuevo estudiante
           const { id, ...dataWithoutId } = estudianteData; // Eliminar el id del objeto
@@ -86,7 +84,6 @@ const Estudiantes: React.FC = () => {
       }
     }
   };
-  
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("¿Seguro que quieres eliminar este estudiante?")) return;
@@ -101,12 +98,12 @@ const Estudiantes: React.FC = () => {
 
   const handleSearch = async () => {
     if (!searchName.trim()) {
-      alert("Por favor, ingresa un nombre válido");
+      alert("Por favor, ingresa un nombre o apellido válido");
       return;
     }
   
     try {
-      const response = await axios.get<Estudiante[]>(`${API_URL}/name/${searchName}`);
+      const response = await axios.get<Estudiante[]>(`${API_URL}/search/${searchName}`);
   
       if (response.data.length > 0) {
         setEstudiantes(response.data);
@@ -147,8 +144,7 @@ const Estudiantes: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell>ID</TableCell>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Apellido</TableCell>
+              <TableCell>Nombre Completo</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Teléfono</TableCell>
               <TableCell>Carrera</TableCell>
@@ -159,8 +155,7 @@ const Estudiantes: React.FC = () => {
             {estudiantes.map((estudiante) => (
               <TableRow key={estudiante.id}>
                 <TableCell>{estudiante.id}</TableCell>
-                <TableCell>{estudiante.name}</TableCell>
-                <TableCell>{estudiante.lastName}</TableCell>
+                <TableCell>{`${estudiante.name} ${estudiante.lastName}`}</TableCell>
                 <TableCell>{estudiante.email}</TableCell>
                 <TableCell>{estudiante.phone}</TableCell>
                 <TableCell>{estudiante.career}</TableCell>
