@@ -1,14 +1,29 @@
-import React from 'react';
-import { Container, CssBaseline } from '@mui/material';
-import Students from './components/Students';
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
+import { ThemeProvider, createTheme } from "@mui/material/styles"
+import CssBaseline from "@mui/material/CssBaseline"
+import Layout from "./components/Layout"
+import Dashboard from "./pages/Dashboard"
+import Estudiantes from "./pages/Estudiantes"
+import Cursos from "./pages/Cursos"
 
-const App: React.FC = () => {
+const theme = createTheme()
+
+function App() {
   return (
-    <Container>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Students />
-    </Container>
-  );
-};
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/estudiantes" element={<Estudiantes />} />
+            <Route path="/cursos" element={<Cursos />} />
+          </Routes>
+        </Layout>
+      </Router>
+    </ThemeProvider>
+  )
+}
 
-export default App;
+export default App
+
