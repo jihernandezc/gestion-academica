@@ -81,6 +81,16 @@ export class ApiController {
     return this.enrollmentsClient.send('delete_enrollment', +id);
   }
 
+  @Get('enrollments/find/student/:name')
+  async findEnrollmentByName(@Param('name') name: string) {
+    return this.apiClient.send('find_enrollment_by_student', name);
+  }
+
+  @Get('enrollments/find/course/:name')
+  async findEnrollmentByCourse(@Param('name') name: string) {
+    return this.apiClient.send('find_enrollment_by_course', name);
+  }
+
   // Metodos HTTP de estudiantes desde el apigateway
   
 

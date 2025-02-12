@@ -12,7 +12,7 @@ import {
 } from "@mui/icons-material"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
-const API_URL = "http://localhost:4000/dashboard"
+const API_URL = "http://localhost:4000/courses/students-count"
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",

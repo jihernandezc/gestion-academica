@@ -127,18 +127,34 @@ const Enrollments: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [currentEnrollment, setCurrentEnrollment] = useState<Enrollment | null>(null);
   const [searchName, setSearchName] = useState("");
+  const [searchCourse, setSearchCourse] = useState("");
   const [loading, setLoading] = useState(false);
   const [filterAssigned, setFilterAssigned] = useState<string>("all");
 
-  const fetchEnrollments = async (search = "", filter = "all") => {
+  const fetchEnrollments = async (nameSearch = "", courseSearch = "", filter = "all") => {
     setLoading(true);
     try {
-      const url = search ? `${API_URL}/enrollments/search?name=${search}` : `${API_URL}/enrollments`;
+      const url = `${API_URL}/enrollments`;
       const response = await axios.get<Enrollment[]>(url);
       let data = response.data;
+
       if (filter !== "all") {
         data = data.filter((enrollment) => (filter === "assigned" ? enrollment.isAssigned : !enrollment.isAssigned));
       }
+
+      if (nameSearch || courseSearch) {
+        const lowercasedNameSearch = nameSearch.toLowerCase();
+        const lowercasedCourseSearch = courseSearch.toLowerCase();
+        data = data.filter((enrollment) => {
+          const student = students.find((s) => s.id === enrollment.studentId);
+          const course = courses.find((c) => c.id === enrollment.courseId);
+          return (
+            (student && `${student.name} ${student.lastName}`.toLowerCase().includes(lowercasedNameSearch)) &&
+            (course && course.name.toLowerCase().includes(lowercasedCourseSearch))
+          );
+        });
+      }
+
       setEnrollments(data);
     } catch (error) {
       console.error("Error al obtener matriculas:", error);
@@ -172,16 +188,16 @@ const Enrollments: React.FC = () => {
   }, []);
 
   const debouncedSearch = useCallback(
-    debounce((searchTerm: string) => fetchEnrollments(searchTerm, filterAssigned), 300),
-    [filterAssigned]
+    debounce((nameSearchTerm: string, courseSearchTerm: string) => fetchEnrollments(nameSearchTerm, courseSearchTerm, filterAssigned), 300),
+    [filterAssigned, students, courses]
   );
 
   useEffect(() => {
-    debouncedSearch(searchName);
-  }, [searchName, debouncedSearch]);
+    debouncedSearch(searchName, searchCourse);
+  }, [searchName, searchCourse, debouncedSearch]);
 
   useEffect(() => {
-    fetchEnrollments(searchName, filterAssigned);
+    fetchEnrollments(searchName, searchCourse, filterAssigned);
   }, [filterAssigned]);
 
   const handleOpen = (enrollment: Enrollment | null = null) => {
@@ -241,10 +257,17 @@ const Enrollments: React.FC = () => {
         </StyledButton>
         <Box sx={{ display: "flex", gap: 2 }}>
           <TextField
-            label="Buscar matrícula"
+            label="Buscar por nombre de estudiante"
             variant="outlined"
             value={searchName}
             onChange={(e) => setSearchName(e.target.value)}
+            size="small"
+          />
+          <TextField
+            label="Buscar por nombre de curso"
+            variant="outlined"
+            value={searchCourse}
+            onChange={(e) => setSearchCourse(e.target.value)}
             size="small"
           />
           <FormControl variant="outlined" size="small">
@@ -259,7 +282,7 @@ const Enrollments: React.FC = () => {
               <MenuItem value="unassigned">No Asignados</MenuItem>
             </Select>
           </FormControl>
-          <StyledButton variant="contained" color="primary" onClick={() => fetchEnrollments(searchName, filterAssigned)} startIcon={<SearchIcon />}>
+          <StyledButton variant="contained" color="primary" onClick={() => fetchEnrollments(searchName, searchCourse, filterAssigned)} startIcon={<SearchIcon />}>
             Buscar
           </StyledButton>
         </Box>
