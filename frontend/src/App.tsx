@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
 import { ThemeProvider, createTheme } from "@mui/material/styles"
 import CssBaseline from "@mui/material/CssBaseline"
-import Layout from "./components/Layout"
+import Layout from "./components/Layout.tsx"
 import Dashboard from "./pages/Dashboard"
 import Estudiantes from "./pages/Estudiantes"
 import Cursos from "./pages/Cursos"

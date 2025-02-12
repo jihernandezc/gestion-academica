@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import * as React from "react";
 import { useState } from "react"
 import {
   Typography,
@@ -31,10 +31,17 @@ interface Estudiante {
 }
 
 const Estudiantes: React.FC = () => {
-  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([
-    { id: 1, name: "Juan", lastName: "Pérez", email: "juan@example.com", phone: "123-456-7890", career: "Ingeniería" },
-    { id: 2, name: "María", lastName: "García", email: "maria@example.com", phone: "098-765-4321", career: "Medicina" },
-  ])
+  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+
+  useEffect(() => {
+    axios.get("http://localhost:4000/students")
+      .then((response) => {
+        setEstudiantes(response.data);
+      })
+      .catch((error) => {
+        console.error("Error al obtener estudiantes:", error);
+      });
+  }, []);
 
   const [open, setOpen] = useState(false)
   const [currentEstudiante, setCurrentEstudiante] = useState<Estudiante | null>(null)
