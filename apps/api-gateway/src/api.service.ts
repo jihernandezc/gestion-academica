@@ -4,6 +4,7 @@ import { Observable, firstValueFrom as rxjsFirstValueFrom } from 'rxjs';
 
 interface Course {
   id: number;
+  name: string;
   maxStudents: number;
   description: string;
   category: string;
@@ -35,5 +36,19 @@ export class ApiService {
     );
     return availableCourses.filter((course) => course !== undefined);
   }
+
+  async getStudentCountByCourses(): Promise<{ name: string; estudiantes: number }[]> {
+    const courses = await rxjsFirstValueFrom(this.coursesClient.send<Course[]>('get_courses', {}));
+
+    const coursePromises = courses.map(async (course) => {
+      const studentCount = await rxjsFirstValueFrom(
+        this.enrollmentsClient.send<number>('get_unique_student_count_by_course', course.id)
+      );
+      return { name: course.name, estudiantes: studentCount };
+    });
+
+    return Promise.all(coursePromises);
+  }
+
 }
 

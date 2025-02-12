@@ -114,13 +114,14 @@ export class EnrollmentsService {
     return assignedCount;
   }
 
-  async getUniqueStudentIdsByCourseId(courseId: number): Promise<number[]> {
+  async getUniqueStudentCountByCourseId(courseId: number): Promise<number> {
     const enrollments = await this.prisma.enrollment.findMany({
       where: { courseId },
       select: { studentId: true }
     });
   
-    const uniqueStudentIds = new Set(enrollments.map(enrollment => enrollment.studentId));
-    return Array.from(uniqueStudentIds);
+    const uniqueStudents = new Set(enrollments.map(e => e.studentId));
+    return uniqueStudents.size;
   }
+  
 }
