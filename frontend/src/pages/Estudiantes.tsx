@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react";
-import { useState } from "react"
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Typography,
   Table,
@@ -17,25 +18,24 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-} from "@mui/material"
-// import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
+} from "@mui/material";
 
 interface Estudiante {
-  id: number
-  name: string
-  lastName: string
-  email: string
-  phone: string
-  career: string
-  // cursos?: { id: number; name: string; finalGrade: number }[];
+  id: number;
+  name: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  career: string;
 }
 
 const Estudiantes: React.FC = () => {
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
 
   useEffect(() => {
-    axios.get("http://localhost:4000/students")
+    axios.get<Estudiante[]>("http://localhost:4000/students")
       .then((response) => {
+        console.log("Datos recibidos:", response.data); // Verifica en la consola
         setEstudiantes(response.data);
       })
       .catch((error) => {
@@ -43,45 +43,43 @@ const Estudiantes: React.FC = () => {
       });
   }, []);
 
-  const [open, setOpen] = useState(false)
-  const [currentEstudiante, setCurrentEstudiante] = useState<Estudiante | null>(null)
-  const [searchId, setSearchId] = useState("")
+  const [open, setOpen] = useState(false);
+  const [currentEstudiante, setCurrentEstudiante] = useState<Estudiante | null>(null);
+  const [searchId, setSearchId] = useState("");
 
   const handleOpen = (estudiante: Estudiante | null = null) => {
-    setCurrentEstudiante(estudiante || { id: 0, name: "", lastName: "", email: "", phone: "", career: "" })
-    setOpen(true)
-  }
+    setCurrentEstudiante(estudiante || { id: 0, name: "", lastName: "", email: "", phone: "", career: "" });
+    setOpen(true);
+  };
 
   const handleClose = () => {
-    setOpen(false)
-  }
+    setOpen(false);
+  };
 
   const handleSave = () => {
     if (currentEstudiante) {
       if (currentEstudiante.id === 0) {
-        // Add new estudiante
-        setEstudiantes([...estudiantes, { ...currentEstudiante, id: estudiantes.length + 1 }])
+        setEstudiantes([...estudiantes, { ...currentEstudiante, id: estudiantes.length + 1 }]);
       } else {
-        // Update existing estudiante
-        setEstudiantes(estudiantes.map((e) => (e.id === currentEstudiante.id ? currentEstudiante : e)))
+        setEstudiantes(estudiantes.map((e) => (e.id === currentEstudiante.id ? currentEstudiante : e)));
       }
     }
-    handleClose()
-  }
+    handleClose();
+  };
 
   const handleDelete = (id: number) => {
-    setEstudiantes(estudiantes.filter((e) => e.id !== id))
-  }
+    setEstudiantes(estudiantes.filter((e) => e.id !== id));
+  };
 
   const handleSearch = () => {
-    const id = Number.parseInt(searchId)
-    const estudiante = estudiantes.find((e) => e.id === id)
+    const id = Number.parseInt(searchId);
+    const estudiante = estudiantes.find((e) => e.id === id);
     if (estudiante) {
-      handleOpen(estudiante)
+      handleOpen(estudiante);
     } else {
-      alert("Estudiante no encontrado")
+      alert("Estudiante no encontrado");
     }
-  }
+  };
 
   return (
     <div>
@@ -185,8 +183,7 @@ const Estudiantes: React.FC = () => {
         </DialogActions>
       </Dialog>
     </div>
-  )
-}
+  );
+};
 
-export default Estudiantes
-
+export default Estudiantes;

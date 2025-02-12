@@ -1,7 +1,7 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Typography,
   Table,
@@ -17,82 +17,74 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-} from "@mui/material"
+} from "@mui/material";
 
 interface Curso {
-  id: number
-  name: string
-  maxStudents: number
-  description: string
-  category: string
-  estudiantes?: { id: number; name: string; finalGrade: number }[]
+  id: number;
+  name: string;
+  maxStudents: number;
+  description: string;
+  category: string;
 }
 
 const Cursos: React.FC = () => {
-  const [cursos, setCursos] = useState<Curso[]>([
-    {
-      id: 1,
-      name: "Matemáticas Avanzadas",
-      maxStudents: 30,
-      description: "Curso avanzado de matemáticas",
-      category: "Ciencias",
-      estudiantes: [
-        { id: 1, name: "Juan Pérez", finalGrade: 8.5 },
-        { id: 2, name: "María García", finalGrade: 9.0 },
-      ],
-    },
-    {
-      id: 2,
-      name: "Literatura Contemporánea",
-      maxStudents: 25,
-      description: "Estudio de literatura moderna",
-      category: "Humanidades",
-      estudiantes: [
-        { id: 3, name: "Carlos Rodríguez", finalGrade: 7.5 },
-        { id: 4, name: "Ana Martínez", finalGrade: 8.0 },
-      ],
-    },
-  ])
+  const [cursos, setCursos] = useState<Curso[]>([]);
+  const [open, setOpen] = useState(false);
+  const [currentCurso, setCurrentCurso] = useState<Curso | null>(null);
+  const [searchId, setSearchId] = useState("");
 
-  const [open, setOpen] = useState(false)
-  const [currentCurso, setCurrentCurso] = useState<Curso | null>(null)
-  const [searchId, setSearchId] = useState("")
+  useEffect(() => {
+    axios.get("http://localhost:4000/courses")
+      .then((response) => {
+        setCursos(response.data);
+      })
+      .catch((error) => {
+        console.error("Error al obtener cursos:", error);
+      });
+  }, []);
 
   const handleOpen = (curso: Curso | null = null) => {
-    setCurrentCurso(curso || { id: 0, name: "", maxStudents: 0, description: "", category: "", estudiantes: [] })
-    setOpen(true)
-  }
+    setCurrentCurso(curso || { id: 0, name: "", maxStudents: 0, description: "", category: "" });
+    setOpen(true);
+  };
 
   const handleClose = () => {
-    setOpen(false)
-  }
+    setOpen(false);
+  };
 
   const handleSave = () => {
     if (currentCurso) {
       if (currentCurso.id === 0) {
-        // Add new curso
-        setCursos([...cursos, { ...currentCurso, id: cursos.length + 1 }])
+        axios.post("http://localhost:4000/courses", currentCurso)
+          .then((response) => {
+            setCursos([...cursos, response.data]);
+          });
       } else {
-        // Update existing curso
-        setCursos(cursos.map((c) => (c.id === currentCurso.id ? currentCurso : c)))
+        axios.put(`http://localhost:4000/courses/${currentCurso.id}`, currentCurso)
+          .then(() => {
+            setCursos(cursos.map((c) => (c.id === currentCurso.id ? currentCurso : c)));
+          });
       }
     }
-    handleClose()
-  }
+    handleClose();
+  };
 
   const handleDelete = (id: number) => {
-    setCursos(cursos.filter((c) => c.id !== id))
-  }
+    axios.delete(`http://localhost:4000/courses/${id}`)
+      .then(() => {
+        setCursos(cursos.filter((c) => c.id !== id));
+      });
+  };
 
   const handleSearch = () => {
-    const id = Number.parseInt(searchId)
-    const curso = cursos.find((c) => c.id === id)
+    const id = Number.parseInt(searchId);
+    const curso = cursos.find((c) => c.id === id);
     if (curso) {
-      handleOpen(curso)
+      handleOpen(curso);
     } else {
-      alert("Curso no encontrado")
+      alert("Curso no encontrado");
     }
-  }
+  };
 
   return (
     <div>
@@ -186,8 +178,7 @@ const Cursos: React.FC = () => {
         </DialogActions>
       </Dialog>
     </div>
-  )
-}
+  );
+};
 
-export default Cursos
-
+export default Cursos;
