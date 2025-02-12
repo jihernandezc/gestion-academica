@@ -16,8 +16,10 @@ export class CoursesController {
 
   @MessagePattern('get_course')
   getCourseById(@Payload() id: number): Promise<Course> {
+    console.log('getCourseById llamado con ID:', id);
     return this.coursesService.getCourseById(id);
-  }
+}
+
 
   @MessagePattern('create_course')
   createCourse(@Payload() data: CreateCourseDto): Promise<Course> {
