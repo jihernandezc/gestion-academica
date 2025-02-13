@@ -30,11 +30,11 @@ git clone <https://github.com/jihernandezc/gestion-academica.git>
 
 - Accede al directorio del backend:
 
-cd backend
+cd apps y luego podras acceder a cada microservicio con cd (nombre del servicio)
 
-- Copia el archivo de variables de entorno:
+- Crea los archivos de las variables de entorno:
 
-cp .env.example .env
+  abre el archivo .env.exaple y sigue sus instrucciones 
 
 - Instala las dependencias:
 
