@@ -52,6 +52,37 @@ npx prisma migrate dev --name init
 docker-compose build
 docker compose up
 
+-Inserción de Datos de Ejemplo
+Para poblar la base de datos con datos de ejemplo, puedes ejecutar los siguientes comandos SQL en tu PostgreSQL:
+**Base de datos de Estudiantes**
+
+INSERT INTO "Student" (name, lastName, email, phone, career) VALUES
+('Ana', 'Martínez', 'ana.martinez@example.com', '555123456', 'Arquitectura'),
+('Carlos', 'López', 'carlos.lopez@example.com', '555987654', 'Derecho'),
+('Lucía', 'Fernández', 'lucia.fernandez@example.com', '555456789', 'Psicología'),
+('Pedro', 'Ramírez', 'pedro.ramirez@example.com', '555789123', 'Ingeniería de Software'),
+('Laura', 'García', 'laura.garcia@example.com', '555321654', 'Administración de Empresas');
+
+**Base de datos de Cursos**
+
+INSERT INTO "Course" (name, maxStudents, description, category) VALUES
+('Física Cuántica', 20, 'Introducción a la mecánica cuántica', 'Ciencia'),
+('Literatura Clásica', 15, 'Análisis de obras literarias clásicas', 'Humanidades'),
+('Programación en JavaScript', 35, 'Desarrollo web con JavaScript', 'Tecnología'),
+('Economía Global', 25, 'Principios de macro y microeconomía', 'Negocios'),
+('Biología Molecular', 20, 'Estudio de la estructura y función de las biomoléculas', 'Ciencia');
+
+**Base de datos de Matrículas**
+
+INSERT INTO "Enrollment" (studentId, courseId, finalGrade, isAssigned) VALUES
+(1, 3, 4.5, true),
+(2, 5, NULL, false),
+(3, 1, 3.5, true),
+(4, 4, 1.6, true),
+(5, 2, 4.0, true),
+(1, 2, NULL, false),
+(3, 4, NULL, false),
+(5, 5, 3.8, true);
 
 ### Los microservicios estarán disponibles en las siguientes direcciones:
 
