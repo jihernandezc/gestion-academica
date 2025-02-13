@@ -12,7 +12,7 @@ Prisma: ORM para interactuar con las bases de datos PostgreSQL.
 
 PostgreSQL: Base de datos relacional.
 
-Yarn: Gestor de paquetes utilizado en el proyecto.
+Npm: Gestor de paquetes utilizado en el proyecto.
 
 **Frontend**
 
@@ -26,7 +26,7 @@ Material-UI: Biblioteca para componentes UI responsivos y fáciles de usar.
 
 - Clona el repositorio:
 
-git clone <URL_DEL_REPOSITORIO>
+git clone <https://github.com/jihernandezc/gestion-academica.git>
 
 - Accede al directorio del backend:
 
@@ -86,11 +86,8 @@ INSERT INTO "Enrollment" (studentId, courseId, finalGrade, isAssigned) VALUES
 
 ### Los microservicios estarán disponibles en las siguientes direcciones:
 
-http://localhost:3000 para la gestión de estudiantes.
+http://localhost:4000 puerto del api-gateway
 
-http://localhost:3001 para la gestión de cursos.
-
-http://localhost:3002 para la gestión de matrículas.
 
 **Frontend (React.js)**
 
@@ -100,11 +97,11 @@ cd frontend
 
 - Instala las dependencias:
 
-yarn install
+npm install
 
 - Inicia el servidor de desarrollo:
 
-yarn run dev
+npm run dev
 
 ### El frontend estará disponible en http://localhost:5173.
 
@@ -146,17 +143,21 @@ El API Gateway expone los siguientes endpoints para interactuar con los microser
 - **DELETE `/students/:id`** - Elimina un estudiante.
 - **GET `/students/search/:name`** - Busca estudiantes por nombre o apellido.
 
-## Ejecución del Proyecto
+## Ejecución del Proyecto - Docker
 
-Ejecuta el backend con el siguiente comando:
-
-```sh
-yarn start:dev
-```
-
-El frontend se ejecuta en el puerto 5173 por defecto:
+Ejecuta el docker
 
 ```sh
-yarn dev
+docker-compose build
 ```
+
+```sh
+docker-compose up
+```
+
+## Acceso a las URL
+
+Acceder a la interfaz en la ruta http://localhost:5173/
+En caso de necesitar directamete la api-gateway esta en http://localhost:4000/
+
 
