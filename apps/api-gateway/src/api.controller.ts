@@ -101,13 +101,6 @@ export class ApiController {
     return students.length;
   }
   
-
-  //Recibe una lista de ids separada por coma (/students/get/by-ids?ids=1,2,3,4) y retornara esos estudiantes en caso de estar en la BD
-  @Get('/students/multiple/by-ids')
-  async findStudentsByIds(@Query('ids') ids: string) {
-    const idsArray = ids.split(',').map(id => parseInt(id, 10));
-    return this.studentsClient.send('find_students_by_ids', idsArray);
-  }
   //Recibe un id desde la ruta variable (students/1) debera retornar el estudiante con el id 1
   @Get('students/find/:id')
   async getStudentById(@Param('id') id: number) {
