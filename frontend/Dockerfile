@@ -7,26 +7,29 @@ WORKDIR /app
 # Copia el package.json y el package-lock.json
 COPY package*.json ./
 
+# Elimina node_modules y package-lock.json si existen
+RUN rm -rf node_modules package-lock.json
+
 # Instala las dependencias
 RUN npm install
 
 # Copia el resto de la aplicación
 COPY . .
 
-# Compila la aplicación
+# Compila la aplicación con Vite
 RUN npm run build
 
-# Etapa final
+# Etapa final con Nginx
 FROM nginx:alpine
 
-# Copia los archivos compilados desde la etapa de compilación
+# Copia los archivos de la build al servidor de Nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copia el archivo de configuración de Nginx
+# Copia la configuración personalizada de Nginx (opcional)
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Expone el puerto en el que la aplicación se ejecutará
-EXPOSE 5173
+# Expone el puerto en el que Nginx servirá la app
+EXPOSE 80
 
-# Comando para ejecutar Nginx
+# Inicia Nginx en primer plano
 CMD ["nginx", "-g", "daemon off;"]
