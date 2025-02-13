@@ -1,5 +1,13 @@
 ## Sistema de Gestión de Estudiantes, Cursos y Matrículas
 
+**Presentado por**
+<ul>
+  <li>Valentina Lujan Robledo</li>
+  <li>Santiago Vanegas Vasquez</li>
+  <li>Laura Ladino Gallego</li>
+  <li>Jimena Hernandez Castillo</li>
+</ul>
+
 Este es un sistema de gestión desarrollado con NestJS, Prisma y una interfaz frontend en React.js. Permite gestionar estudiantes, cursos y las matrículas de los estudiantes en los cursos, todo conectado a bases de datos PostgreSQL.
 
 ## Tecnologías Utilizadas
