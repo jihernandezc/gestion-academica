@@ -22,9 +22,16 @@ import {
   Box,
   Chip,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 import { styled, keyframes } from "@mui/material/styles";
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon } from "@mui/icons-material";
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Search as SearchIcon,
+  Refresh as RefreshIcon,
+} from "@mui/icons-material";
 import debounce from "lodash/debounce";
 
 interface Curso {
@@ -46,6 +53,15 @@ const fadeIn = keyframes`
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+`;
+
+const rotate = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 `;
 
@@ -112,6 +128,10 @@ const Cursos: React.FC = () => {
   const [currentCurso, setCurrentCurso] = useState<Curso | null>(null);
   const [searchName, setSearchName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
+  // Intervalo de 5 segundos para refrescar
+  const POLLING_INTERVAL = 200;
 
   const fetchAvailableSlots = async (courseId: number): Promise<number> => {
     try {
@@ -123,12 +143,29 @@ const Cursos: React.FC = () => {
     }
   };
 
+  const updateAvailableSlots = async () => {
+    try {
+      setUpdating(true);
+      const updatedCursos = await Promise.all(
+        cursos.map(async (curso) => {
+          const availableSlots = await fetchAvailableSlots(curso.id);
+          return { ...curso, availableSlots };
+        })
+      );
+      setCursos(updatedCursos);
+    } catch (error) {
+      console.error("Error al actualizar cupos disponibles:", error);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const fetchCursos = async (search = "") => {
     setLoading(true);
     try {
       const url = search ? `${API_URL}/search/${search}` : API_URL;
       const response = await axios.get<Curso[]>(url);
-      
+
       // Obtener los cupos disponibles para cada curso
       const cursosConCupos = await Promise.all(
         response.data.map(async (curso) => {
@@ -136,7 +173,7 @@ const Cursos: React.FC = () => {
           return { ...curso, availableSlots };
         })
       );
-  
+
       setCursos(cursosConCupos);
     } catch (error) {
       console.error("Error al cargar los cursos:", error);
@@ -145,12 +182,14 @@ const Cursos: React.FC = () => {
     }
   };
 
+  // Cargar cursos al montar
   useEffect(() => {
     fetchCursos();
   }, []);
 
+  // Actualizar cursos cada vez que cambia el campo de búsqueda, con debounce
   const debouncedSearch = useCallback(
-    debounce((searchTerm: string) => fetchCursos(searchTerm), 300),
+    debounce((term: string) => fetchCursos(term), 300),
     []
   );
 
@@ -158,46 +197,68 @@ const Cursos: React.FC = () => {
     debouncedSearch(searchName);
   }, [searchName, debouncedSearch]);
 
+  // Polling para actualizar los cupos disponibles
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (!open) {
+        updateAvailableSlots();
+      }
+    }, POLLING_INTERVAL);
+    return () => clearInterval(intervalId);
+  }, [cursos, open]);
+
+  // Abre el modal para agregar o editar curso
   const handleOpen = (curso: Curso | null = null) => {
-    setCurrentCurso(curso || { id: 0, name: "", maxStudents: 0, description: "", category: "" });
+    if (curso) {
+      setCurrentCurso(curso);
+    } else {
+      setCurrentCurso({
+        id: 0,
+        name: "",
+        maxStudents: 0,
+        description: "",
+        category: "",
+      });
+    }
     setOpen(true);
   };
 
+  // Cierra el modal
   const handleClose = () => {
     setOpen(false);
   };
 
-  
-const handleSave = async () => {
-  if (!currentCurso) return;
+  // Crea o actualiza un curso
+  const handleSave = async () => {
+    if (!currentCurso) return;
 
-  try {
-    setLoading(true);
-    const { id, availableSlots, ...cursoData } = currentCurso; // Excluir availableSlots ya que no es parte del modelo
+    try {
+      setLoading(true);
+      const { id, availableSlots, ...cursoData } = currentCurso;
 
-    if (!id || Number(id) === 0) {
-      // Para crear un nuevo curso
-      const response = await axios.post(`${API_URL}`, cursoData);
-      setCursos([...cursos, response.data]);
-    } else {
-      // Para actualizar un curso existente
-      const response = await axios.put(`${API_URL}/update/${id}`, cursoData);
-      setCursos((prev) => prev.map((c) => (c.id === id ? { ...c, ...response.data } : c)));
+      if (!id || Number(id) === 0) {
+        // Creación
+        const response = await axios.post(`${API_URL}`, cursoData);
+        setCursos([...cursos, response.data]);
+      } else {
+        // Actualización
+        const response = await axios.put(`${API_URL}/update/${id}`, cursoData);
+        setCursos((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, ...response.data } : c))
+        );
+      }
+      handleClose();
+    } catch (error) {
+      console.error("Error al guardar curso:", error);
+      alert("Error al guardar el curso. Por favor, intente nuevamente.");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    handleClose();
-  } catch (error) {
-    console.error("Error al guardar curso:", error);
-    // Agregar alerta de error
-    alert("Error al guardar el curso. Por favor, intente nuevamente.");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  // Elimina un curso
   const handleDelete = async (id: number) => {
     if (!window.confirm("¿Seguro que quieres eliminar este curso?")) return;
-
     try {
       setLoading(true);
       await axios.delete(`${API_URL}/${id}`);
@@ -211,11 +272,20 @@ const handleSave = async () => {
 
   return (
     <Box sx={{ maxWidth: 1200, margin: "0 auto", padding: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: "bold", color: "primary.main" }}>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{ mb: 4, fontWeight: "bold", color: "primary.main" }}
+      >
         Cursos
       </Typography>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <StyledButton variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => handleOpen()}>
+        <StyledButton
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          onClick={() => handleOpen()}
+        >
           Agregar Curso
         </StyledButton>
         <Box sx={{ display: "flex", gap: 2 }}>
@@ -226,7 +296,12 @@ const handleSave = async () => {
             onChange={(e) => setSearchName(e.target.value)}
             size="small"
           />
-          <StyledButton variant="contained" color="primary" onClick={() => fetchCursos(searchName)} startIcon={<SearchIcon />}>
+          <StyledButton
+            variant="contained"
+            color="primary"
+            onClick={() => fetchCursos(searchName)}
+            startIcon={<SearchIcon />}
+          >
             Buscar
           </StyledButton>
         </Box>
@@ -238,44 +313,59 @@ const handleSave = async () => {
       ) : (
         <AnimatedTableContainer component={Paper} elevation={3}>
           <Table>
-  <TableHead>
-    <TableRow>
-      <StyledTableCell>ID</StyledTableCell>
-      <StyledTableCell>Nombre</StyledTableCell>
-      <StyledTableCell>Máx. Estudiantes</StyledTableCell>
-      <StyledTableCell>Cupos Disponibles</StyledTableCell> {/* Nueva columna */}
-      <StyledTableCell>Descripción</StyledTableCell>
-      <StyledTableCell>Categoría</StyledTableCell>
-      <StyledTableCell align="center">Acciones</StyledTableCell>
-    </TableRow>
-  </TableHead>
-  <TableBody>
-    {cursos.map((curso) => (
-      <StyledTableRow key={curso.id}>
-        <TableCell>{curso.id}</TableCell>
-        <TableCell>{curso.name}</TableCell>
-        <TableCell>{curso.maxStudents}</TableCell>
-        <TableCell>{curso.availableSlots}</TableCell> {/* Mostrar cupos disponibles */}
-        <TableCell>{curso.description}</TableCell>
-        <TableCell>
-          <StyledChip label={curso.category} />
-        </TableCell>
-        <TableCell align="center">
-          <StyledIconButton onClick={() => handleOpen(curso)} color="primary">
-            <EditIcon />
-          </StyledIconButton>
-          <StyledIconButton onClick={() => handleDelete(curso.id)} color="error">
-            <DeleteIcon />
-          </StyledIconButton>
-        </TableCell>
-      </StyledTableRow>
-    ))}
-  </TableBody>
-</Table>
+            <TableHead>
+              <TableRow>
+                <StyledTableCell>ID</StyledTableCell>
+                <StyledTableCell>Nombre</StyledTableCell>
+                <StyledTableCell>Máx. Estudiantes</StyledTableCell>
+                <StyledTableCell>
+                  Cupos Disponibles
+                  {updating && (
+                    <Tooltip title="Actualizando cupos...">
+                      <RefreshIcon
+                        sx={{
+                          ml: 1,
+                          animation: `${rotate} 2s linear infinite`,
+                          fontSize: "small",
+                        }}
+                      />
+                    </Tooltip>
+                  )}
+                </StyledTableCell>
+                <StyledTableCell>Descripción</StyledTableCell>
+                <StyledTableCell>Categoría</StyledTableCell>
+                <StyledTableCell align="center">Acciones</StyledTableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {cursos.map((curso) => (
+                <StyledTableRow key={curso.id}>
+                  <TableCell>{curso.id}</TableCell>
+                  <TableCell>{curso.name}</TableCell>
+                  <TableCell>{curso.maxStudents}</TableCell>
+                  <TableCell>{curso.availableSlots}</TableCell>
+                  <TableCell>{curso.description}</TableCell>
+                  <TableCell>
+                    <StyledChip label={curso.category} />
+                  </TableCell>
+                  <TableCell align="center">
+                    <StyledIconButton onClick={() => handleOpen(curso)} color="primary">
+                      <EditIcon />
+                    </StyledIconButton>
+                    <StyledIconButton onClick={() => handleDelete(curso.id)} color="error">
+                      <DeleteIcon />
+                    </StyledIconButton>
+                  </TableCell>
+                </StyledTableRow>
+              ))}
+            </TableBody>
+          </Table>
         </AnimatedTableContainer>
       )}
       <StyledDialog open={open} onClose={handleClose}>
-        <DialogTitle>{currentCurso && currentCurso.id ? "Editar Curso" : "Agregar Curso"}</DialogTitle>
+        <DialogTitle>
+          {currentCurso && currentCurso.id ? "Editar Curso" : "Agregar Curso"}
+        </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -283,7 +373,9 @@ const handleSave = async () => {
             label="Nombre"
             fullWidth
             value={currentCurso?.name || ""}
-            onChange={(e) => setCurrentCurso({ ...currentCurso!, name: e.target.value })}
+            onChange={(e) =>
+              setCurrentCurso({ ...currentCurso!, name: e.target.value })
+            }
           />
           <TextField
             margin="dense"
@@ -291,21 +383,30 @@ const handleSave = async () => {
             fullWidth
             type="number"
             value={currentCurso?.maxStudents || ""}
-            onChange={(e) => setCurrentCurso({ ...currentCurso!, maxStudents: Number.parseInt(e.target.value) })}
+            onChange={(e) =>
+              setCurrentCurso({
+                ...currentCurso!,
+                maxStudents: Number.parseInt(e.target.value),
+              })
+            }
           />
           <TextField
             margin="dense"
             label="Descripción"
             fullWidth
             value={currentCurso?.description || ""}
-            onChange={(e) => setCurrentCurso({ ...currentCurso!, description: e.target.value })}
+            onChange={(e) =>
+              setCurrentCurso({ ...currentCurso!, description: e.target.value })
+            }
           />
           <TextField
             margin="dense"
             label="Categoría"
             fullWidth
             value={currentCurso?.category || ""}
-            onChange={(e) => setCurrentCurso({ ...currentCurso!, category: e.target.value })}
+            onChange={(e) =>
+              setCurrentCurso({ ...currentCurso!, category: e.target.value })
+            }
           />
         </DialogContent>
         <DialogActions>
