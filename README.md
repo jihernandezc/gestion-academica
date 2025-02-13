@@ -109,39 +109,87 @@ npm run dev
 
 El API Gateway expone los siguientes endpoints para interactuar con los microservicios de cursos, estudiantes y matrículas.
 
-### Rutas de Cursos
+# API Gateway
 
-- **GET `/count/courses`** - Retorna el número total de cursos.
-- **GET `/courses`** - Obtiene la lista de todos los cursos.
-- **GET `/courses/:id`** - Obtiene un curso por su ID.
-- **POST `/courses`** - Crea un nuevo curso.
-- **PUT `/courses/update/:id`** - Actualiza un curso por su ID.
-- **DELETE `/courses/:id`** - Elimina un curso por su ID.
-- **GET `/courses/search/:name`** - Busca cursos por nombre.
-- **GET `/courses/available-count/:courseId`** - Obtiene la cantidad de plazas disponibles en un curso.
-- **GET `/courses/assigned/count`** - Obtiene el número de estudiantes asignados a cursos.
-- **GET `/coursesName/assigned/count`** - Obtiene el número de estudiantes asignados junto con los nombres de los cursos.
+Este módulo centraliza el acceso a los microservicios de cursos, matrículas y estudiantes. A continuación se listan las rutas disponibles:
 
-### Rutas de Matrículas
+## Rutas de Cursos
 
-- **GET `/enrollments`** - Obtiene todas las matrículas.
-- **GET `/enrollments/:id`** - Obtiene una matrícula por ID.
-- **POST `/enrollments`** - Crea una matrícula.
-- **PUT `/enrollments/update/:id`** - Actualiza una matrícula.
-- **DELETE `/enrollments/:id`** - Elimina una matrícula.
-- **GET `/assigned/students`** - Obtiene la cantidad total de estudiantes asignados.
-- **GET `/unassigned/students`** - Obtiene la cantidad de estudiantes no asignados a cursos.
+- *GET* /count/courses  
+  Retorna la cantidad total de cursos (usa COURSES_SERVICE para obtenerlos).
 
-### Rutas de Estudiantes
+- *GET* /courses  
+  Retorna todos los cursos (usa COURSES_SERVICE).
 
-- **GET `/students`** - Obtiene todos los estudiantes.
-- **GET `/count/students`** - Obtiene el número total de estudiantes.
-- **GET `/students/multiple/by-ids?ids=1,2,3`** - Obtiene varios estudiantes por sus IDs.
-- **GET `/students/find/:id`** - Obtiene un estudiante por su ID.
-- **POST `/students`** - Crea un estudiante.
-- **PUT `/students/update/:id`** - Actualiza un estudiante.
-- **DELETE `/students/:id`** - Elimina un estudiante.
-- **GET `/students/search/:name`** - Busca estudiantes por nombre o apellido.
+- *GET* /courses/:id  
+  Obtiene un curso por su ID (usa COURSES_SERVICE).
+
+- *POST* /courses  
+  Crea un curso con la información enviada en el body (usa COURSES_SERVICE).
+
+- *PUT* /courses/update/:id  
+  Actualiza un curso según el ID, recibiendo datos en el body (usa COURSES_SERVICE).
+
+- *DELETE* /courses/:id  
+  Elimina un curso por ID (usa COURSES_SERVICE).
+
+- *GET* /courses/search/:name  
+  Busca cursos por nombre (usa COURSES_SERVICE).
+
+- *GET* /courses/available-count/:courseId  
+  Retorna los cupos disponibles de un curso (usa COURSES_SERVICE y ENROLLMENTS_SERVICE).
+
+- *GET* /courses/assigned/count  
+  Obtiene el total de asignaciones por curso (usa ENROLLMENTS_SERVICE).
+
+- *GET* /coursesName/assigned/count  
+  Igual que la anterior, pero además devuelve los nombres de los cursos consultados (usa COURSES_SERVICE y ENROLLMENTS_SERVICE).
+
+## Rutas de Matrículas
+
+- *GET* /enrollments  
+  Lista todas las matrículas (usa ENROLLMENTS_SERVICE).
+
+- *GET* /enrollments/:id  
+  Obtiene una matrícula por ID (usa ENROLLMENTS_SERVICE).
+
+- *POST* /enrollments  
+  Crea una matrícula (usa ENROLLMENTS_SERVICE).
+
+- *PUT* /enrollments/update/:id  
+  Actualiza una matrícula según el ID, recibiendo datos en el body (usa ENROLLMENTS_SERVICE).
+
+- *DELETE* /enrollments/:id  
+  Elimina una matrícula por ID (usa ENROLLMENTS_SERVICE).
+
+- *GET* /assigned/students  
+  Retorna la cantidad total de estudiantes asignados (usa ENROLLMENTS_SERVICE).
+
+- *GET* /unassigned/students  
+  Muestra la cantidad de estudiantes que no están asignados a un curso (usa ENROLLMENTS_SERVICE).
+
+## Rutas de Estudiantes
+
+- *GET* /students  
+  Retorna todos los estudiantes (usa STUDENTS_SERVICE).
+
+- *GET* /count/students  
+  Retorna la cantidad total de estudiantes (usa STUDENTS_SERVICE).
+
+- *GET* /students/find/:id  
+  Retorna el estudiante con el ID especificado (usa STUDENTS_SERVICE).
+
+- *POST* /students  
+  Crea un estudiante (usa STUDENTS_SERVICE).
+
+- *PUT* /students/update/:id  
+  Actualiza un estudiante por ID (usa STUDENTS_SERVICE).
+
+- *DELETE* /students/:id  
+  Elimina un estudiante por ID (usa STUDENTS_SERVICE).
+
+- *GET* /students/search/:name  
+  Busca estudiantes por nombre o apellido (usa STUDENTS_SERVICE).
 
 ## Ejecución del Proyecto - Docker
 
