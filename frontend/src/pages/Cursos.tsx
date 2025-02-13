@@ -167,28 +167,33 @@ const Cursos: React.FC = () => {
     setOpen(false);
   };
 
-  const handleSave = async () => {
-    if (!currentCurso) return;
+  
+const handleSave = async () => {
+  if (!currentCurso) return;
 
-    try {
-      setLoading(true);
-      const { id, ...cursoData } = currentCurso;
+  try {
+    setLoading(true);
+    const { id, availableSlots, ...cursoData } = currentCurso; // Excluir availableSlots ya que no es parte del modelo
 
-      if (!id || Number(id) === 0) {
-        const response = await axios.post(API_URL, cursoData);
-        setCursos([...cursos, response.data]);
-      } else {
-        await axios.put(`${API_URL}/update/${id}`, cursoData);
-        setCursos((prev) => prev.map((c) => (c.id === id ? { ...c, ...cursoData } : c)));
-      }
-
-      handleClose();
-    } catch (error) {
-      console.error("Error al guardar curso:", error);
-    } finally {
-      setLoading(false);
+    if (!id || Number(id) === 0) {
+      // Para crear un nuevo curso
+      const response = await axios.post(`${API_URL}`, cursoData);
+      setCursos([...cursos, response.data]);
+    } else {
+      // Para actualizar un curso existente
+      const response = await axios.put(`${API_URL}/update/${id}`, cursoData);
+      setCursos((prev) => prev.map((c) => (c.id === id ? { ...c, ...response.data } : c)));
     }
-  };
+
+    handleClose();
+  } catch (error) {
+    console.error("Error al guardar curso:", error);
+    // Agregar alerta de error
+    alert("Error al guardar el curso. Por favor, intente nuevamente.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("¿Seguro que quieres eliminar este curso?")) return;
