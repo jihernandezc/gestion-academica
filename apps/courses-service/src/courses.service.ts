@@ -33,8 +33,24 @@ export class CoursesService {
     return this.prisma.course.delete({ where: { id } });
   }
 
-  async getMaxStudentsByCourses(): Promise<{ id: number; maxStudents: number }[]> {
-    const courses = await this.prisma.course.findMany({ select: { id: true, maxStudents: true } });
-    return courses.map(course => ({ id: course.id, maxStudents: course.maxStudents }));
+  async getMaxStudentsByCourses(courseId: number): Promise<number> {
+    const course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+      select: { maxStudents: true },
+    });
+  
+    if (!course) {
+      throw new NotFoundException(`Course with ID ${courseId} not found`);
+    }
+  
+    return course.maxStudents;
+  }
+
+  async getCoursesByIds(ids: number[]): Promise<Course[]> {
+    return this.prisma.course.findMany({
+      where: {
+        id: { in: ids }
+      }
+    });
   }
 }

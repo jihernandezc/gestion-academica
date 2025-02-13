@@ -31,6 +31,7 @@ interface Curso {
   id: number;
   name: string;
   maxStudents: number;
+  availableSlots?: number;
   description: string;
   category: string;
 }
@@ -112,12 +113,31 @@ const Cursos: React.FC = () => {
   const [searchName, setSearchName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const fetchAvailableSlots = async (courseId: number): Promise<number> => {
+    try {
+      const response = await axios.get<number>(`${API_URL}/available-count/${courseId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener los cupos disponibles:", error);
+      return 0;
+    }
+  };
+
   const fetchCursos = async (search = "") => {
     setLoading(true);
     try {
       const url = search ? `${API_URL}/search/${search}` : API_URL;
       const response = await axios.get<Curso[]>(url);
-      setCursos(response.data);
+      
+      // Obtener los cupos disponibles para cada curso
+      const cursosConCupos = await Promise.all(
+        response.data.map(async (curso) => {
+          const availableSlots = await fetchAvailableSlots(curso.id);
+          return { ...curso, availableSlots };
+        })
+      );
+  
+      setCursos(cursosConCupos);
     } catch (error) {
       console.error("Error al cargar los cursos:", error);
     } finally {
@@ -213,38 +233,40 @@ const Cursos: React.FC = () => {
       ) : (
         <AnimatedTableContainer component={Paper} elevation={3}>
           <Table>
-            <TableHead>
-              <TableRow>
-                <StyledTableCell>ID</StyledTableCell>
-                <StyledTableCell>Nombre</StyledTableCell>
-                <StyledTableCell>Máx. Estudiantes</StyledTableCell>
-                <StyledTableCell>Descripción</StyledTableCell>
-                <StyledTableCell>Categoría</StyledTableCell>
-                <StyledTableCell align="center">Acciones</StyledTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {cursos.map((curso) => (
-                <StyledTableRow key={curso.id}>
-                  <TableCell>{curso.id}</TableCell>
-                  <TableCell>{curso.name}</TableCell>
-                  <TableCell>{curso.maxStudents}</TableCell>
-                  <TableCell>{curso.description}</TableCell>
-                  <TableCell>
-                    <StyledChip label={curso.category} />
-                  </TableCell>
-                  <TableCell align="center">
-                    <StyledIconButton onClick={() => handleOpen(curso)} color="primary">
-                      <EditIcon />
-                    </StyledIconButton>
-                    <StyledIconButton onClick={() => handleDelete(curso.id)} color="error">
-                      <DeleteIcon />
-                    </StyledIconButton>
-                  </TableCell>
-                </StyledTableRow>
-              ))}
-            </TableBody>
-          </Table>
+  <TableHead>
+    <TableRow>
+      <StyledTableCell>ID</StyledTableCell>
+      <StyledTableCell>Nombre</StyledTableCell>
+      <StyledTableCell>Máx. Estudiantes</StyledTableCell>
+      <StyledTableCell>Cupos Disponibles</StyledTableCell> {/* Nueva columna */}
+      <StyledTableCell>Descripción</StyledTableCell>
+      <StyledTableCell>Categoría</StyledTableCell>
+      <StyledTableCell align="center">Acciones</StyledTableCell>
+    </TableRow>
+  </TableHead>
+  <TableBody>
+    {cursos.map((curso) => (
+      <StyledTableRow key={curso.id}>
+        <TableCell>{curso.id}</TableCell>
+        <TableCell>{curso.name}</TableCell>
+        <TableCell>{curso.maxStudents}</TableCell>
+        <TableCell>{curso.availableSlots}</TableCell> {/* Mostrar cupos disponibles */}
+        <TableCell>{curso.description}</TableCell>
+        <TableCell>
+          <StyledChip label={curso.category} />
+        </TableCell>
+        <TableCell align="center">
+          <StyledIconButton onClick={() => handleOpen(curso)} color="primary">
+            <EditIcon />
+          </StyledIconButton>
+          <StyledIconButton onClick={() => handleDelete(curso.id)} color="error">
+            <DeleteIcon />
+          </StyledIconButton>
+        </TableCell>
+      </StyledTableRow>
+    ))}
+  </TableBody>
+</Table>
         </AnimatedTableContainer>
       )}
       <StyledDialog open={open} onClose={handleClose}>

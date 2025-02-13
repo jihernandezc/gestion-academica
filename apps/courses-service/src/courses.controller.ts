@@ -36,14 +36,20 @@ export class CoursesController {
     return this.coursesService.deleteCourse(id);
   }
 
-  @MessagePattern('get_max_students_by_courses')
-  getMaxStudentsByCourses(): Promise<{ id: number, maxStudents: number }[]> {
-    return this.coursesService.getMaxStudentsByCourses();
+  @MessagePattern('get_max_students')
+  getMaxStudentsByCourses(@Payload() courseId : number): Promise<number> {
+    return this.coursesService.getMaxStudentsByCourses(courseId);
   }
 
   @MessagePattern('find_courses_by_name')
   findCoursesByName(@Payload() name: string): Promise<Course[]> {
     return this.coursesService.findCoursesByName(name);
   }
+
+  @MessagePattern('get_courses_by_ids')
+async getCoursesByIds(@Payload() ids: number[]): Promise<{ id: number, name: string }[]> {
+  const courses = await this.coursesService.getCoursesByIds(ids);
+  return courses.map(course => ({ id: course.id, name: course.name }));
+}
   
 }

@@ -99,7 +99,7 @@ export class EnrollmentsService {
     });
   }
 
-  async getAssignedCountByCourses(): Promise<{ courseId: number; assignedCount: number }[]> {
+  async getAssignedCountByCourses(): Promise<{ courseId: number; count: number }[]> {
     const enrollments = await this.prisma.enrollment.findMany({
       where: { isAssigned: true },
       select: { courseId: true }
@@ -108,11 +108,27 @@ export class EnrollmentsService {
     const courses = Array.from(new Set(enrollments.map(enrollment => enrollment.courseId)));
     const assignedCount = courses.map(courseId => ({
       courseId,
-      assignedCount: enrollments.filter(enrollment => enrollment.courseId === courseId).length
+      count: enrollments.filter(enrollment => enrollment.courseId === courseId).length
     }));
 
     return assignedCount;
   }
+
+  async getUnAssignedCountByCourses(): Promise<{ courseId: number; count: number }[]> {
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { isAssigned: false },
+      select: { courseId: true }
+    });
+
+    const courses = Array.from(new Set(enrollments.map(enrollment => enrollment.courseId)));
+    const unAssignedCount = courses.map(courseId => ({
+      courseId,
+      count: enrollments.filter(enrollment => enrollment.courseId === courseId).length
+    }));
+
+    return unAssignedCount;
+  }
+
 
   async getUniqueStudentCountByCourseId(courseId: number): Promise<number> {
     const enrollments = await this.prisma.enrollment.findMany({

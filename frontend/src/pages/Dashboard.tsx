@@ -12,7 +12,11 @@ import {
 } from "@mui/icons-material"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
-const API_URL = "http://localhost:4000/courses/students-count"
+const API_COURSES_COUNT = "http://localhost:4000/count/courses"
+const API_STUDENTS_COUNT = "http://localhost:4000/count/students"
+const API_COURSES = "http://localhost:4000/courses"
+const API_COURSES_ASSIGNED = "http://localhost:4000/courses/assigned/count"
+const API_UNASSIGNED_STUDENTS = "http://localhost:4000/unassigned/students"
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -30,20 +34,81 @@ const StatsCard = styled(Card)(({ theme }) => ({
   justifyContent: "space-between",
 }))
 
+interface Course {
+  id: number
+  name: string
+}
+
+interface AssignedCourse {
+  courseId: number
+  count: number
+}
+
+interface UnassignedStudent {
+  courseId: number
+  count: number
+}
+
 const Dashboard: React.FC = () => {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<{
+    totalEstudiantes: number
+    totalCursos: number
+    matriculasActivas: number
+    solicitudesCupo: number
+    cursosConMasEstudiantes: { name: string; count: number }[]
+  }>({
     totalEstudiantes: 0,
     totalCursos: 0,
     matriculasActivas: 0,
-    promedioGeneral: 0,
-    estudiantesPorCurso: [],
+    solicitudesCupo: 0,
+    cursosConMasEstudiantes: [],
   })
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get(API_URL)
-        setStats(response.data)
+        const [
+          studentsResponse,
+          coursesResponse,
+          allCoursesResponse,
+          assignedCoursesResponse,
+          unassignedStudentsResponse,
+        ] = await Promise.all([
+          axios.get<number>(API_STUDENTS_COUNT),
+          axios.get<number>(API_COURSES_COUNT),
+          axios.get<Course[]>(API_COURSES),
+          axios.get<AssignedCourse[]>(API_COURSES_ASSIGNED),
+          axios.get<UnassignedStudent[]>(API_UNASSIGNED_STUDENTS),
+        ])
+
+        const courses = allCoursesResponse.data
+        const assignedCourses = assignedCoursesResponse.data
+        const unassignedStudents = unassignedStudentsResponse.data
+
+        // Mapeo de IDs a nombres de cursos
+        const courseMap = new Map<number, string>()
+        courses.forEach(course => {
+          courseMap.set(course.id, course.name)
+        })
+
+        // Combinar datos de estudiantes inscritos con nombres de cursos
+        const formattedCourses = assignedCourses
+          .map(({ courseId, count }) => ({
+            name: courseMap.get(courseId) || `Curso ${courseId}`,
+            count,
+          }))
+          .sort((a, b) => b.count - a.count) // Ordenar de mayor a menor
+
+        // Sumar todas las solicitudes de cupo
+        const totalSolicitudesCupo = unassignedStudents.reduce((acc, curr) => acc + curr.count, 0)
+
+        setStats({
+          totalEstudiantes: studentsResponse.data,
+          totalCursos: coursesResponse.data,
+          matriculasActivas: assignedCourses.reduce((acc, curr) => acc + curr.count, 0),
+          solicitudesCupo: totalSolicitudesCupo,
+          cursosConMasEstudiantes: formattedCourses.slice(0, 5), // Tomar los 5 cursos con más estudiantes
+        })
       } catch (error) {
         console.error("Error al obtener datos del dashboard:", error)
       }
@@ -94,26 +159,26 @@ const Dashboard: React.FC = () => {
         <Grid item xs={12} md={3}>
           <StatsCard>
             <CardHeader
-              avatar={<Avatar sx={{ bgcolor: "success.main" }}><GradeIcon /></Avatar>}
-              title="Promedio General"
+              avatar={<Avatar sx={{ bgcolor: "warning.main" }}><GradeIcon /></Avatar>}
+              title="Solicitudes de Cupo"
             />
             <CardContent>
-              <Typography variant="h4">{stats.promedioGeneral}</Typography>
+              <Typography variant="h4">{stats.solicitudesCupo}</Typography>
             </CardContent>
           </StatsCard>
         </Grid>
         <Grid item xs={12}>
           <Item>
             <Typography variant="h6" gutterBottom>
-              Estudiantes por Curso
+              Cursos con Más Estudiantes
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={stats.estudiantesPorCurso}>
+              <BarChart data={stats.cursosConMasEstudiantes}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="estudiantes" fill="#8884d8" />
+                <Bar dataKey="count" fill="#8884d8" />
               </BarChart>
             </ResponsiveContainer>
           </Item>

@@ -54,23 +54,18 @@ export class EnrollmentsController {
     return this.enrollmentsService.getUnassignedCoursesByStudentId(studentId);
   }
 
-  @MessagePattern('get_average_grade_by_student')
-  getAverageGradeByStudentId(@Payload() studentId: number): Promise<number> { 
-    return this.enrollmentsService.getAverageGradeByStudentId(studentId);
+  @MessagePattern('get_unassigned_count_by_course')
+  getUnassignedStudentsByCourseId(): Promise<{ courseId: number; count: number }[]> {
+    return this.enrollmentsService.getUnAssignedCountByCourses();
   }
 
-  @MessagePattern('ger_average_grade_by_course')
-  getAverageGradeByCourseId(@Payload() courseId: number): Promise<number> {
-    return this.enrollmentsService.getAverageGradeByCourseId(courseId);
-  }
-
-  @MessagePattern('get_assisgned_count_by_course_id')
+  @MessagePattern('get_assigned_count_by_course')
   getAssignedStudentsCountByCourseId(@Payload() courseId: number): Promise<number> {
     return this.enrollmentsService.getAssignedCountByCourseId(courseId);
   }
 
-  @MessagePattern('get_assigned_count_by_courses') 
-  getAssignedStudentsCountByCourses(): Promise<{ courseId: number, assignedCount: number }[]> {
+  @MessagePattern('get_assigned_count')
+  getAssignedCount(): Promise<{ courseId: number, count: number }[]> {
     return this.enrollmentsService.getAssignedCountByCourses();
   }
 
